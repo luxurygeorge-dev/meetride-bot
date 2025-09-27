@@ -1,0 +1,37 @@
+# Секретные файлы (НИКОГДА не попадают в Git)
+config/secrets.php
+config/tokens.php
+.env
+*.env
+
+# Логи
+logs/*
+!logs/.gitkeep
+
+# Временные файлы
+tmp/
+temp/
+*.tmp
+
+# Composer
+vendor/
+composer.lock
+
+# IDE файлы
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Системные файлы
+.DS_Store
+Thumbs.db
+
+# Специфичные для сервера
+crest/settings.php
+local_config.php
+
+# Резервные копии
+*.backup
+*.bak
+*~
