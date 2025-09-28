@@ -3,6 +3,9 @@
  * Ручная отправка заявки в общий чат
  */
 
+use Telegram\Bot\Api;
+use Store\botManager;
+
 echo "=== РУЧНАЯ ОТПРАВКА ЗАЯВКИ ===\n\n";
 
 if (empty($argv[1])) {
@@ -22,7 +25,7 @@ try {
     echo "✅ Библиотеки подключены\n";
     
     // Инициализируем Telegram
-    $telegram = new Longman\TelegramBot\Telegram('7529690360:AAHED5aKmuKjjfFQPRI-0RQ8DlxlZARA2O4');
+    $telegram = new Api('7529690360:AAHED5aKmuKjjfFQPRI-0RQ8DlxlZARA2O4');
     echo "✅ Telegram инициализирован\n";
     
     // Проверяем заявку

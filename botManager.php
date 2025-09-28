@@ -16,21 +16,27 @@ class botManager {
     public const DRIVER_ID_FIELD                = 'UF_CRM_1751272181';
     public const DRIVER_TELEGRAM_ID_FIELD       = 'UF_CRM_1751185017761';
     public const ADDRESS_FROM_FIELD             = 'UF_CRM_1751269147414';
-    public const ADDRESS_FROM_FIELD_SERVICE     = 'UF_CRM_1751638512';
+    public const ADDRESS_FROM_FIELD_SERVICE     = 'UF_CRM_1751638512'; // Исправлено на правильное поле
     public const ADDRESS_TO_FIELD               = 'UF_CRM_1751269175432';
     public const ADDRESS_TO_FIELD_SERVICE       = 'UF_CRM_1751638529';
     public const ADDITIONAL_CONDITIONS_FIELD    = 'UF_CRM_1751269256380';
+    public const FLIGHT_NUMBER_FIELD            = 'UF_CRM_1751271774391'; // Номер рейса
+    public const CAR_CLASS_FIELD                = 'UF_CRM_1751271728682'; // Класс автомобиля
     public const DRIVER_SUM_FIELD               = 'UF_CRM_1751271862251';
     public const DRIVER_SUM_FIELD_SERVICE       = 'UF_CRM_1751638441407';
     public const TRAVEL_DATE_TIME_FIELD         = 'UF_CRM_1751269222959';
     public const TRAVEL_DATE_TIME_FIELD_SERVICE = 'UF_CRM_1751638617';
+    public const ADDITIONAL_CONDITIONS_FIELD_SERVICE = 'UF_CRM_1758709126'; // REMINDER_SENT_FIELD (используем как SERVICE)
+    public const PASSENGERS_FIELD_SERVICE = 'UF_CRM_1758709139'; // REMINDER_CONFIRMED_FIELD (используем как SERVICE)
+    public const FLIGHT_NUMBER_FIELD_SERVICE = 'UF_CRM_1758710216'; // REMINDER_NOTIFICATION_SENT_FIELD (используем как SERVICE)
+    public const CAR_CLASS_FIELD_SERVICE = 'UF_CRM_1751271841129'; // HIDDEN_FIELD (используем как SERVICE)
     public const DRIVER_ACCEPTED_STAGE_ID       = 'PREPAYMENT_INVOICE'; // Водитель взял заявку
     public const NEW_DEAL_STAGE_ID              = 'NEW';
     public const DRIVER_CHOICE_STAGE_ID         = 'PREPARATION';
     public const TRAVEL_STARTED_STAGE_ID         = 'EXECUTING'; // Заявка выполняется
     public const FINISH_STAGE_ID         = 'FINAL_INVOICE';
     public const DRIVER_CONTACT_TYPE            = 'UC_C7O5J7';
-    public const DRIVERS_GROUP_CHAT_ID = '-1001649190984'; // ТЕСТОВЫЙ режим; // ТЕСТОВАЯ группа водителей (НЕ МЕНЯТЬ НА БОЕВУЮ!)
+    public const DRIVERS_GROUP_CHAT_ID = '-1002544521661'; // БОЕВОЙ режим'; // ТЕСТОВЫЙ режим'; // БОЕВОЙ режим'; // ТЕСТОВЫЙ режим; // ТЕСТОВАЯ группа водителей (НЕ МЕНЯТЬ НА БОЕВУЮ!)
     
     // Поля для системы напоминаний (исправленные ID)
     public const REMINDER_SENT_FIELD            = 'UF_CRM_1758709126';
@@ -41,7 +47,7 @@ class botManager {
         require_once('/home/telegramBot/crest/crest.php');
         $deal = \CRest::call('crm.deal.get', [
             'id' => $dealid,
-            'select' => ['*'] // Получаем все поля включая TITLE
+            'select' => ['*', botManager::CAR_CLASS_FIELD] // Получаем все поля включая TITLE и класс авто
         ])['result'];
         if(empty($deal['ID'])) {
             return false;
@@ -69,14 +75,20 @@ class botManager {
         ];
 
         // Отправляем в общий чат водителей (БЕЗ пассажиров!)
-        $result = $telegram->sendMessage([
-            'chat_id'      => botManager::DRIVERS_GROUP_CHAT_ID,
-            'text'         => botManager::orderTextForGroup($deal, $driverName),
-            'reply_markup' => json_encode($keyboard),
-            'parse_mode'   => 'HTML',
-        ]);
-        
-        return $result->isOk();
+        try {
+            $result = $telegram->sendMessage([
+                'chat_id'      => botManager::DRIVERS_GROUP_CHAT_ID,
+                'text'         => botManager::orderTextForGroup($deal, $driverName),
+                'reply_markup' => json_encode($keyboard),
+                'parse_mode'   => 'HTML',
+            ]);
+            
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - newDealMessage result: " . ($result ? 'SUCCESS' : 'FAILED') . "\n", FILE_APPEND);
+            return $result && (method_exists($result, 'isOk') ? $result->isOk() : true);
+        } catch (Exception $e) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - newDealMessage error: " . $e->getMessage() . "\n", FILE_APPEND);
+            return false;
+        }
     }
 
     public static function buttonHanlde($telegram, $result) {
@@ -153,7 +165,7 @@ class botManager {
         require_once(__DIR__ . '/crest/crest.php');
         $deal = \CRest::call('crm.deal.get', [
             'id' => $dealId,
-            'select' => ['*', 'UF_CRM_1751271798896'] // Добавляем поле "Пассажиры"
+            'select' => ['*', 'UF_CRM_1751271798896', botManager::FLIGHT_NUMBER_FIELD] // Добавляем поля "Пассажиры" и "Номер рейса"
         ])['result'];
         
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal loaded: " . ($deal['ID'] ?? 'NOT_FOUND') . "\n", FILE_APPEND);
@@ -211,14 +223,18 @@ class botManager {
                         botManager::DRIVER_SUM_FIELD_SERVICE => $deal[botManager::DRIVER_SUM_FIELD],
                         botManager::ADDRESS_FROM_FIELD_SERVICE => $deal[botManager::ADDRESS_FROM_FIELD],
                         botManager::ADDRESS_TO_FIELD_SERVICE => $deal[botManager::ADDRESS_TO_FIELD],
-                        botManager::TRAVEL_DATE_TIME_FIELD_SERVICE => $deal[botManager::TRAVEL_DATE_TIME_FIELD]
+                        botManager::TRAVEL_DATE_TIME_FIELD_SERVICE => $deal[botManager::TRAVEL_DATE_TIME_FIELD],
+                        botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE => $deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
+                        botManager::PASSENGERS_FIELD_SERVICE => $deal['UF_CRM_1751271798896'],
+                        botManager::FLIGHT_NUMBER_FIELD_SERVICE => $deal[botManager::FLIGHT_NUMBER_FIELD],
+                        botManager::CAR_CLASS_FIELD_SERVICE => $deal[botManager::CAR_CLASS_FIELD]
                     ]
                 ]);
                 
-                // Получаем обновленную заявку с полем "Пассажиры"
+                // Получаем обновленную заявку с полями "Пассажиры" и "Номер рейса"
                 $deal = \CRest::call('crm.deal.get', [
                     'id' => $dealId,
-                    'select' => ['*', 'UF_CRM_1751271798896']
+                    'select' => ['*', 'UF_CRM_1751271798896', botManager::FLIGHT_NUMBER_FIELD]
                 ])['result'];
                 
                 // Отправляем уведомление в общий чат (имя из CRM)  
@@ -267,19 +283,23 @@ class botManager {
                 
             } else {
                 // НЕЗАРЕГИСТРИРОВАННЫЙ ВОДИТЕЛЬ
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Unregistered driver, assigning contact ID 39\n", FILE_APPEND);
+                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Unregistered driver, assigning contact ID 9\n", FILE_APPEND);
                 
-                // Назначаем контакт ID 39, меняем стадию и инициализируем SERVICE поля
+                // Назначаем контакт ID 9, меняем стадию и инициализируем SERVICE поля
                 \CRest::call('crm.deal.update', [
                     'id' => $dealId, 
                     'fields' => [
-                        botManager::DRIVER_ID_FIELD => 39,
+                        botManager::DRIVER_ID_FIELD => 9,
                         'STAGE_ID' => botManager::DRIVER_ACCEPTED_STAGE_ID,
                         // Инициализируем SERVICE поля сразу, чтобы избежать ложных уведомлений
                         botManager::DRIVER_SUM_FIELD_SERVICE => $deal[botManager::DRIVER_SUM_FIELD],
                         botManager::ADDRESS_FROM_FIELD_SERVICE => $deal[botManager::ADDRESS_FROM_FIELD],
                         botManager::ADDRESS_TO_FIELD_SERVICE => $deal[botManager::ADDRESS_TO_FIELD],
-                        botManager::TRAVEL_DATE_TIME_FIELD_SERVICE => $deal[botManager::TRAVEL_DATE_TIME_FIELD]
+                        botManager::TRAVEL_DATE_TIME_FIELD_SERVICE => $deal[botManager::TRAVEL_DATE_TIME_FIELD],
+                        botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE => $deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
+                        botManager::PASSENGERS_FIELD_SERVICE => $deal['UF_CRM_1751271798896'],
+                        botManager::FLIGHT_NUMBER_FIELD_SERVICE => $deal[botManager::FLIGHT_NUMBER_FIELD],
+                        botManager::CAR_CLASS_FIELD_SERVICE => $deal[botManager::CAR_CLASS_FIELD]
                     ]
                 ]);
                 
@@ -322,7 +342,104 @@ class botManager {
             // Водитель уже назначен - проверяем, тот ли это водитель
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Driver already assigned (ID: $currentDriverId), checking if it's the same driver\n", FILE_APPEND);
             
-            // Получаем данные назначенного водителя
+            // НОВАЯ ЛОГИКА: Если назначен контакт ID 9, любой зарегистрированный водитель может взять заявку
+            // ЭТА ПРОВЕРКА ДОЛЖНА БЫТЬ ПЕРВОЙ!
+            if ($currentDriverId == 9) {
+                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Driver ID 9 assigned, allowing any registered driver to take the deal\n", FILE_APPEND);
+                
+                // Ищем водителя по Telegram ID
+                $drivers = \CRest::call('crm.contact.list', [
+                    'filter' => ['UF_CRM_1751185017761' => $telegramId],
+                    'select' => ['ID', 'NAME', 'LAST_NAME']
+                ]);
+                
+                if (isset($drivers['result']) && !empty($drivers['result'])) {
+                    // ЗАРЕГИСТРИРОВАННЫЙ ВОДИТЕЛЬ - разрешаем взять заявку
+                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Registered driver found, allowing to take deal from ID 9\n", FILE_APPEND);
+                    
+                    $driver = $drivers['result'][0];
+                    $driverId = $driver['ID'];
+                    $driverName = trim($driver['NAME'] . ' ' . $driver['LAST_NAME']);
+                    
+                    // Назначаем нового водителя, меняем стадию и инициализируем SERVICE поля
+                    \CRest::call('crm.deal.update', [
+                        'id' => $dealId, 
+                        'fields' => [
+                            botManager::DRIVER_ID_FIELD => $driverId,
+                            'STAGE_ID' => botManager::DRIVER_ACCEPTED_STAGE_ID,
+                            // Инициализируем SERVICE поля сразу, чтобы избежать ложных уведомлений
+                            botManager::DRIVER_SUM_FIELD_SERVICE => $deal[botManager::DRIVER_SUM_FIELD],
+                            botManager::ADDRESS_FROM_FIELD_SERVICE => $deal[botManager::ADDRESS_FROM_FIELD],
+                            botManager::ADDRESS_TO_FIELD_SERVICE => $deal[botManager::ADDRESS_TO_FIELD],
+                            botManager::TRAVEL_DATE_TIME_FIELD_SERVICE => $deal[botManager::TRAVEL_DATE_TIME_FIELD]
+                        ]
+                    ]);
+                    
+                    // Получаем обновленную заявку с полями "Пассажиры" и "Номер рейса"
+                    $deal = \CRest::call('crm.deal.get', [
+                        'id' => $dealId,
+                        'select' => ['*', 'UF_CRM_1751271798896', botManager::FLIGHT_NUMBER_FIELD]
+                    ])['result'];
+                    
+                    // Отправляем уведомление в общий чат (имя из CRM)  
+                    $orderNumber = $deal['TITLE'] ?? $dealId;
+                    // Убираем префикс "Заявка: " если есть
+                    if (strpos($orderNumber, 'Заявка: ') === 0) {
+                        $orderNumber = substr($orderNumber, 8);
+                    }
+                    $groupMessage = "✅ Заявку #$orderNumber взял водитель: <b>$driverName</b>";
+                    $telegram->sendMessage([
+                        'chat_id' => $chatId,
+                        'text' => $groupMessage,
+                        'parse_mode' => 'HTML'
+                    ]);
+                    
+                    // Убираем кнопки с исходного сообщения
+                    $telegram->editMessageReplyMarkup([
+                        'chat_id' => $chatId,
+                        'message_id' => $message->getMessageId(),
+                        'reply_markup' => json_encode(['inline_keyboard' => []])
+                    ]);
+                    
+                    // Отправляем детальную информацию в личку
+                    $detailedMessage = botManager::orderTextForDriver($deal);
+                    $privateKeyboard = [
+                        'inline_keyboard' => [
+                            [
+                                ['text' => '✅ Начать выполнение', 'callback_data' => "start_$dealId"],
+                                ['text' => '❌ Отказаться', 'callback_data' => "reject_$dealId"]
+                            ]
+                        ]
+                    ];
+                    
+                    $telegram->sendMessage([
+                        'chat_id' => $telegramId,
+                        'text' => $detailedMessage,
+                        'reply_markup' => json_encode($privateKeyboard),
+                        'parse_mode' => 'HTML'
+                    ]);
+                    
+                    $telegram->answerCallbackQuery([
+                        'callback_query_id' => $result->callbackQuery->id,
+                        'text' => 'Заявка принята! Детали отправлены в личные сообщения.',
+                        'show_alert' => true
+                    ]);
+                    
+                } else {
+                    // НЕЗАРЕГИСТРИРОВАННЫЙ ВОДИТЕЛЬ - отказываем
+                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Unregistered driver trying to take deal from ID 9, rejecting\n", FILE_APPEND);
+                    
+                    $telegram->answerCallbackQuery([
+                        'callback_query_id' => $result->callbackQuery->id,
+                        'text' => 'Только зарегистрированные водители могут взять эту заявку.',
+                        'show_alert' => true
+                    ]);
+                }
+                
+                return; // Завершаем выполнение функции
+            }
+            
+            // Обычная логика для других водителей (не ID 9)
             $assignedDriver = \CRest::call('crm.contact.get', [
                 'id' => $currentDriverId,
                 'select' => ['ID', 'NAME', 'LAST_NAME', botManager::DRIVER_TELEGRAM_ID_FIELD]
@@ -334,27 +451,32 @@ class botManager {
                 
                 $driverName = trim($assignedDriver['NAME'] . ' ' . $assignedDriver['LAST_NAME']);
                 
-                // Получаем правильный номер заказа из TITLE
-                $orderNumber = $deal['TITLE'] ?? $dealId;
-                // Убираем префикс "Заявка: " если есть
-                if (strpos($orderNumber, 'Заявка: ') === 0) {
-                    $orderNumber = substr($orderNumber, 8);
-                }
-                
-                // Отправляем уведомление в общий чат о том, кто взял заявку
-                $groupMessage = "✅ Заявку #$orderNumber взял водитель: <b>$driverName</b>";
-                $telegram->sendMessage([
-                    'chat_id' => $chatId,
-                    'text' => $groupMessage,
-                    'parse_mode' => 'HTML'
-                ]);
-                
-                // Убираем кнопки с исходного сообщения
+                // Убираем кнопки с исходного сообщения СРАЗУ (защита от спама)
                 $telegram->editMessageReplyMarkup([
                     'chat_id' => $chatId,
                     'message_id' => $message->getMessageId(),
                     'reply_markup' => json_encode(['inline_keyboard' => []])
                 ]);
+                
+                // Проверяем, отправлялось ли уже уведомление о взятии заявки
+                $orderNumber = $deal['TITLE'] ?? $dealId;
+                if (strpos($orderNumber, 'Заявка: ') === 0) {
+                    $orderNumber = substr($orderNumber, 8);
+                }
+                
+                // Отправляем уведомление в общий чат ТОЛЬКО если кнопки еще были активны
+                // (если кнопки уже удалены, значит уведомление уже отправлялось)
+                try {
+                    $groupMessage = "✅ Заявку #$orderNumber взял водитель: <b>$driverName</b>";
+                    $telegram->sendMessage([
+                        'chat_id' => $chatId,
+                        'text' => $groupMessage,
+                        'parse_mode' => 'HTML'
+                    ]);
+                } catch (Exception $e) {
+                    // Игнорируем ошибки отправки (возможно, сообщение уже было отправлено)
+                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Group message already sent, ignoring\n", FILE_APPEND);
+                }
                 
                 // Отправляем детальную информацию водителю в личные сообщения
                 file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Generating detailed message\n", FILE_APPEND);
@@ -761,7 +883,10 @@ class botManager {
     }
 
     public static function dealChangeHandle(int $dealId, Api $telegram, Update $result): void {
-        $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
+        $deal = \CRest::call('crm.deal.get', [
+            'id' => $dealId,
+            'select' => ['*', 'UF_CRM_1751271798896', botManager::FLIGHT_NUMBER_FIELD] // Добавляем поля "Пассажиры" и "Номер рейса"
+        ])['result'];
         if(empty($deal['ID'])) {
             $telegram->answerCallbackQuery([
                     'callback_query_id' => $result->callbackQuery->id,
@@ -771,13 +896,13 @@ class botManager {
             exit;
         }
         
-        // ЗАЩИТА ОТ СПАМА: Проверяем, что поля SERVICE не совпадают с основными
-        // Если совпадают - значит уведомление уже было отправлено
-        if ($deal[botManager::DRIVER_SUM_FIELD] === $deal[botManager::DRIVER_SUM_FIELD_SERVICE] &&
-            $deal[botManager::ADDRESS_FROM_FIELD] === $deal[botManager::ADDRESS_FROM_FIELD_SERVICE] &&
-            $deal[botManager::ADDRESS_TO_FIELD] === $deal[botManager::ADDRESS_TO_FIELD_SERVICE] &&
-            $deal[botManager::TRAVEL_DATE_TIME_FIELD] === $deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE]) {
-            return; // Уведомление уже было отправлено - выходим
+        // ЗАЩИТА ОТ СПАМА: Проверяем временную метку последнего уведомления
+        $lastNotificationTime = $deal['UF_CRM_1751638512'] ?? null; // Используем поле для временной метки
+        $currentTime = time();
+        
+        // Если последнее уведомление было отправлено менее 30 секунд назад - игнорируем
+        if ($lastNotificationTime && ($currentTime - strtotime($lastNotificationTime)) < 30) {
+            return; // Слишком часто - выходим
         }
         $driver = \CRest::call('crm.contact.get', ['id' => $deal[botManager::DRIVER_ID_FIELD]])['result'];
         if(empty($driver['ID'])) {
@@ -789,36 +914,112 @@ class botManager {
             exit;
         }
         $driverTelegramId = (int) $driver[botManager::DRIVER_TELEGRAM_ID_FIELD];
-        $newSum = null;
-        if ($deal[botManager::DRIVER_SUM_FIELD] !== $deal[botManager::DRIVER_SUM_FIELD_SERVICE]) {
-            $newSum = (int) $deal[botManager::DRIVER_SUM_FIELD];
+        // Проверяем реальные изменения полей с валидацией SERVICE полей
+        $changes = [];
+        
+        // Функция для проверки валидности SERVICE поля
+        $isValidServiceValue = function($serviceValue, $mainValue) {
+            // Если SERVICE поле пустое, а основное не пустое - это изменение
+            if (empty($serviceValue) && !empty($mainValue)) {
+                return false;
+            }
+            
+            // Если SERVICE поле содержит дату (формат Y-m-d H:i:s или ISO), а основное поле не дата - неправильно
+            if (preg_match('/^\d{4}-\d{2}-\d{2}/', $serviceValue) && !preg_match('/^\d{4}-\d{2}-\d{2}/', $mainValue)) {
+                return false;
+            }
+            
+            // Если SERVICE поле содержит "Array" - неправильно
+            if ($serviceValue === 'Array') {
+                return false;
+            }
+            
+            return true;
+        };
+        
+        // Сумма
+        $mainSum = $deal[botManager::DRIVER_SUM_FIELD];
+        $serviceSum = $deal[botManager::DRIVER_SUM_FIELD_SERVICE];
+        if ($mainSum !== $serviceSum && $isValidServiceValue($serviceSum, $mainSum)) {
+            $changes['sum'] = (int) $mainSum;
         }
-        $newAddressFrom=null;
-        if ($deal[botManager::ADDRESS_FROM_FIELD] !== $deal[botManager::ADDRESS_FROM_FIELD_SERVICE]) {
-            $newAddressFrom = (string) $deal[botManager::ADDRESS_FROM_FIELD];
+        
+        // Адрес отправления
+        $mainAddressFrom = $deal[botManager::ADDRESS_FROM_FIELD];
+        $serviceAddressFrom = $deal[botManager::ADDRESS_FROM_FIELD_SERVICE];
+        if ($mainAddressFrom !== $serviceAddressFrom && $isValidServiceValue($serviceAddressFrom, $mainAddressFrom)) {
+            $changes['addressFrom'] = (string) $mainAddressFrom;
         }
-        $newAddressTo=null;
-        if ($deal[botManager::ADDRESS_TO_FIELD] !== $deal[botManager::ADDRESS_TO_FIELD_SERVICE]) {
-            $newAddressTo = (string) $deal[botManager::ADDRESS_TO_FIELD];
+        
+        // Адрес назначения
+        $mainAddressTo = $deal[botManager::ADDRESS_TO_FIELD];
+        $serviceAddressTo = $deal[botManager::ADDRESS_TO_FIELD_SERVICE];
+        if ($mainAddressTo !== $serviceAddressTo && $isValidServiceValue($serviceAddressTo, $mainAddressTo)) {
+            $changes['addressTo'] = (string) $mainAddressTo;
         }
-        $newDate=null;
-        if ($deal[botManager::TRAVEL_DATE_TIME_FIELD] !== $deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE]) {
-            $newDate = (string) $deal[botManager::TRAVEL_DATE_TIME_FIELD];
+        
+        // Дата и время
+        $mainDate = $deal[botManager::TRAVEL_DATE_TIME_FIELD];
+        $serviceDate = $deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE];
+        if ($mainDate !== $serviceDate && $isValidServiceValue($serviceDate, $mainDate)) {
+            $changes['date'] = (string) $mainDate;
+        }
+        
+        // Дополнительные условия
+        $mainAdditionalConditions = $deal[botManager::ADDITIONAL_CONDITIONS_FIELD];
+        $serviceAdditionalConditions = $deal[botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE];
+        if ($mainAdditionalConditions !== $serviceAdditionalConditions && $isValidServiceValue($serviceAdditionalConditions, $mainAdditionalConditions)) {
+            $changes['additionalConditions'] = (string) $mainAdditionalConditions;
+        }
+        
+        // Пассажиры
+        $mainPassengers = $deal['UF_CRM_1751271798896'];
+        $servicePassengers = $deal[botManager::PASSENGERS_FIELD_SERVICE];
+        if ($mainPassengers !== $servicePassengers && $isValidServiceValue($servicePassengers, $mainPassengers)) {
+            if (is_array($mainPassengers)) {
+                $changes['passengers'] = implode(", ", $mainPassengers);
+            } else {
+                $changes['passengers'] = (string) $mainPassengers;
+            }
+        }
+        
+        // Номер рейса
+        $mainFlightNumber = $deal[botManager::FLIGHT_NUMBER_FIELD];
+        $serviceFlightNumber = $deal[botManager::FLIGHT_NUMBER_FIELD_SERVICE];
+        if ($mainFlightNumber !== $serviceFlightNumber && $isValidServiceValue($serviceFlightNumber, $mainFlightNumber)) {
+            $changes['flightNumber'] = (string) $mainFlightNumber;
+        }
+        
+        // Класс автомобиля
+        $mainCarClass = $deal[botManager::CAR_CLASS_FIELD];
+        $serviceCarClass = $deal[botManager::CAR_CLASS_FIELD_SERVICE];
+        if ($mainCarClass !== $serviceCarClass && $isValidServiceValue($serviceCarClass, $mainCarClass)) {
+            $changes['carClass'] = (string) $mainCarClass;
+        }
+        
+        // Если нет изменений - выходим
+        if (empty($changes)) {
+            return;
         }
 
         $telegram->sendMessage(
                 [
                         'chat_id'      => $driverTelegramId,
-                        'text'         => botManager::orderText($deal, $newSum, $newAddressFrom, $newAddressTo, $newDate),
+                        'text'         => botManager::orderTextForDriverWithChangesSimple($deal, $changes),
                         'parse_mode' => 'HTML',
                 ]
         );
         $dealUpdate = \CRest::call('crm.deal.update', ['id' => $dealId, 'fields'=>[
-                // УБРАЛИ автоматическое изменение стадии - только обновляем service поля
+                // Обновляем все SERVICE поля
                 botManager::DRIVER_SUM_FIELD_SERVICE=>$deal[botManager::DRIVER_SUM_FIELD],
                 botManager::ADDRESS_FROM_FIELD_SERVICE=>$deal[botManager::ADDRESS_FROM_FIELD],
                 botManager::ADDRESS_TO_FIELD_SERVICE=>$deal[botManager::ADDRESS_TO_FIELD],
-                botManager::TRAVEL_DATE_TIME_FIELD_SERVICE=>$deal[botManager::TRAVEL_DATE_TIME_FIELD]
+                botManager::TRAVEL_DATE_TIME_FIELD_SERVICE=>$deal[botManager::TRAVEL_DATE_TIME_FIELD],
+                botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE=>$deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
+                botManager::PASSENGERS_FIELD_SERVICE=>$deal['UF_CRM_1751271798896'],
+                botManager::FLIGHT_NUMBER_FIELD_SERVICE=>$deal[botManager::FLIGHT_NUMBER_FIELD],
+                botManager::CAR_CLASS_FIELD_SERVICE=>$deal[botManager::CAR_CLASS_FIELD],
+                'UF_CRM_1751638512' => date('Y-m-d H:i:s') // Обновляем временную метку
         ]
         ]);
         $telegram->answerCallbackQuery([
@@ -866,7 +1067,10 @@ class botManager {
             \CRest::call('crm.deal.update', ['id' => $dealId, 'fields'=>[botManager::DRIVER_ID_FIELD => $driverId, 'STAGE_ID'=>botManager::DRIVER_ACCEPTED_STAGE_ID]])['result'];
         }
         sleep(3);
-        $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
+        $deal = \CRest::call('crm.deal.get', [
+            'id' => $dealId,
+            'select' => ['*', 'UF_CRM_1751271798896', botManager::FLIGHT_NUMBER_FIELD] // Добавляем поля "Пассажиры" и "Номер рейса"
+        ])['result'];
         if(empty($deal['ID'])) {
             $telegram->answerCallbackQuery([
                     'callback_query_id' => $result->callbackQuery->id,
@@ -902,7 +1106,7 @@ class botManager {
         
         $telegram->sendMessage([
             'chat_id' => $driverTelegramId,
-            'text' => botManager::orderTextWithDriver($deal, $driverName),
+            'text' => botManager::orderTextForDriver($deal),
             'reply_markup' => json_encode($keyboard),
             'parse_mode' => 'HTML'
         ]);
@@ -931,7 +1135,11 @@ class botManager {
     ): string {
         $additionalConditions = '';
         if (!empty($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
-            $additionalConditions = implode(" | ", $deal[botManager::ADDITIONAL_CONDITIONS_FIELD]);
+            if (is_array($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
+                $additionalConditions = implode(" | ", $deal[botManager::ADDITIONAL_CONDITIONS_FIELD]);
+            } else {
+                $additionalConditions = $deal[botManager::ADDITIONAL_CONDITIONS_FIELD];
+            }
         }
         // Форматируем дату в человеческий вид
         $dateText = $deal[botManager::TRAVEL_DATE_TIME_FIELD];
@@ -1019,7 +1227,11 @@ HTML;
     public static function orderTextWithDriver(array $deal, string $driverName): string {
         $additionalConditions = '';
         if (!empty($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
-            $additionalConditions = implode(" | ", $deal[botManager::ADDITIONAL_CONDITIONS_FIELD]);
+            if (is_array($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
+                $additionalConditions = implode(" | ", $deal[botManager::ADDITIONAL_CONDITIONS_FIELD]);
+            } else {
+                $additionalConditions = $deal[botManager::ADDITIONAL_CONDITIONS_FIELD];
+            }
         }
         
         // Форматируем дату в удобочитаемый вид
@@ -1064,7 +1276,11 @@ HTML;
     public static function orderTextForGroup(array $deal, string $driverName = ''): string {
         $additionalConditions = '';
         if (!empty($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
-            $additionalConditions = implode(" | ", $deal[botManager::ADDITIONAL_CONDITIONS_FIELD]);
+            if (is_array($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
+                $additionalConditions = implode(" | ", $deal[botManager::ADDITIONAL_CONDITIONS_FIELD]);
+            } else {
+                $additionalConditions = $deal[botManager::ADDITIONAL_CONDITIONS_FIELD];
+            }
         }
         
         // Форматируем дату в удобочитаемый вид
@@ -1076,6 +1292,12 @@ HTML;
         
         $fromAddress = $deal[botManager::ADDRESS_FROM_FIELD];
         $toAddress = $deal[botManager::ADDRESS_TO_FIELD];
+        
+        // Получаем класс автомобиля
+        $carClassName = 'Не указано';
+        if (!empty($deal[botManager::CAR_CLASS_FIELD])) {
+            $carClassName = botManager::getCarClassName((int)$deal[botManager::CAR_CLASS_FIELD]);
+        }
         
         // Убираем |RUB из суммы
         $sumText = $deal[botManager::DRIVER_SUM_FIELD];
@@ -1102,6 +1324,8 @@ $header
 
 📆 {$dateText}
 
+🚗 {$carClassName}
+
 🅰️ {$fromAddress}
 
 🅱️ {$toAddress}
@@ -1112,6 +1336,30 @@ $header
 HTML;
 
         return $text;
+    }
+
+    /**
+     * Получает название класса автомобиля по ID
+     */
+    public static function getCarClassName(int $carClassId): string {
+        $carClassMapping = [
+            119 => 'Стандарт',
+            93 => 'Комфорт',
+            95 => 'Комфорт+',
+            97 => 'Микроавтобус',
+            99 => 'Минивэн',
+            101 => 'Минивэн VIP',
+            103 => 'Автобус',
+            105 => 'Бизнес',
+            107 => 'Представительский',
+            109 => 'Кроссовер',
+            111 => 'Джип',
+            113 => 'Внедорожник',
+            115 => 'Трезвый водитель',
+            117 => 'Доставка'
+        ];
+        
+        return $carClassMapping[$carClassId] ?? 'Не указано';
     }
 
     public static function writeToLog($LogFileName, $info, $prefix = '', $wa = 'a') {
@@ -1383,7 +1631,11 @@ HTML;
     public static function orderTextForDriver(array $deal): string {
         $additionalConditions = '';
         if (!empty($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
-            $additionalConditions = implode(" | ", $deal[botManager::ADDITIONAL_CONDITIONS_FIELD]);
+            if (is_array($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
+                $additionalConditions = implode(" | ", $deal[botManager::ADDITIONAL_CONDITIONS_FIELD]);
+            } else {
+                $additionalConditions = $deal[botManager::ADDITIONAL_CONDITIONS_FIELD];
+            }
         }
         
         // Форматируем дату в удобочитаемый вид
@@ -1413,6 +1665,12 @@ HTML;
             }
         }
         
+        // Получаем информацию о номере рейса (показываем)
+        $flightNumber = 'Не указано';
+        if (!empty($deal[botManager::FLIGHT_NUMBER_FIELD])) {
+            $flightNumber = $deal[botManager::FLIGHT_NUMBER_FIELD];
+        }
+        
         // Поле UF_CRM_1751271841129 НЕ ПОКАЗЫВАЕМ никогда!
         
         // Используем TITLE как номер заявки, а не ID сделки
@@ -1434,6 +1692,8 @@ $header
 
 👥 <b>Пассажиры:</b> {$passengers}
 
+✈️ <b>Номер рейса:</b> {$flightNumber}
+
 ℹ️ <b>Дополнительные условия:</b> {$additionalConditions}
 
 💰 <b>Сумма:</b> {$sumText}
@@ -1442,5 +1702,370 @@ $header
 HTML;
 
         return $text;
+    }
+
+    /**
+     * Формирует детальный текст заявки для личных сообщений водителю с поддержкой изменений
+     * Включает поле "Пассажиры" (UF_CRM_1751271798896) и номер рейса
+     */
+    public static function orderTextForDriverWithChanges(
+            array $deal,
+            ?int $newSum = null,
+            ?string $newFromAddress = null,
+            ?string $newToAddress = null,
+            ?string $newDate = null,
+            ?string $newAdditionalConditions = null,
+            ?string $newPassengers = null,
+            ?string $newFlightNumber = null,
+            ?string $newCarClass = null
+    ): string {
+        $additionalConditions = '';
+        if (!empty($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
+            if (is_array($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
+                $additionalConditions = implode(" | ", $deal[botManager::ADDITIONAL_CONDITIONS_FIELD]);
+            } else {
+                $additionalConditions = $deal[botManager::ADDITIONAL_CONDITIONS_FIELD];
+            }
+        }
+        
+        // Форматируем дату в удобочитаемый вид
+        $dateText = $deal[botManager::TRAVEL_DATE_TIME_FIELD];
+        if ($dateText) {
+            $date = new \DateTime($dateText);
+            $dateText = $date->format('d.m.Y H:i');
+        }
+        
+        if ($newDate !== null) {
+            // Форматируем старую дату
+            $oldDate = $deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE];
+            if ($oldDate) {
+                $oldDateFormatted = (new \DateTime($oldDate))->format('d.m.Y H:i');
+            } else {
+                $oldDateFormatted = $oldDate;
+            }
+            
+            // Форматируем новую дату
+            $newDateFormatted = $newDate;
+            if ($newDate) {
+                $newDateFormatted = (new \DateTime($newDate))->format('d.m.Y H:i');
+            }
+            
+            $dateText = "<s>{$oldDateFormatted}</s> ➔ {$newDateFormatted}";
+        }
+
+        // Форматируем адрес отправления
+        $fromAddress = $deal[botManager::ADDRESS_FROM_FIELD];
+        if ($newFromAddress !== null) {
+            $fromAddress = "<s>{$deal[botManager::ADDRESS_FROM_FIELD_SERVICE]}</s> ➔ {$newFromAddress}";
+        }
+
+        // Форматируем адрес назначения
+        $toAddress = $deal[botManager::ADDRESS_TO_FIELD];
+        if ($newToAddress !== null) {
+            $toAddress = "<s>{$deal[botManager::ADDRESS_TO_FIELD_SERVICE]}</s> ➔ {$newToAddress}";
+        }
+
+        // Форматируем сумму
+        $sumText = $deal[botManager::DRIVER_SUM_FIELD];
+        if ($newSum !== null) {
+            $oldSum = $deal[botManager::DRIVER_SUM_FIELD_SERVICE];
+            $sumText = "<s>{$oldSum}</s> ➔ {$newSum} руб.";
+        } else {
+            // Убираем |RUB из суммы
+            if ($sumText) {
+                $sumText = str_replace('|RUB', '', $sumText);
+            }
+        }
+        
+        // Получаем информацию о пассажирах (показываем)
+        $passengers = 'Не указано';
+        if (!empty($deal['UF_CRM_1751271798896'])) {
+            // Если поле - массив, преобразуем в строку
+            if (is_array($deal['UF_CRM_1751271798896'])) {
+                $passengers = implode(", ", $deal['UF_CRM_1751271798896']);
+            } else {
+                $passengers = $deal['UF_CRM_1751271798896'];
+            }
+        }
+        
+        // Получаем информацию о номере рейса (показываем)
+        $flightNumber = 'Не указано';
+        if (!empty($deal[botManager::FLIGHT_NUMBER_FIELD])) {
+            $flightNumber = $deal[botManager::FLIGHT_NUMBER_FIELD];
+        }
+        
+        // Используем TITLE как номер заявки, а не ID сделки
+        $orderNumber = $deal['TITLE'] ?? $deal['ID'];
+        // Очищаем номер от лишнего текста (может быть "Заявка: 999999")
+        if (strpos($orderNumber, ':') !== false) {
+            $orderNumber = trim(explode(':', $orderNumber)[1]);
+        }
+        
+        $header = "🚗 Ваша заявка #$orderNumber";
+        if($newSum || $newToAddress || $newFromAddress || $newDate) {
+            $header = "🚗 Заявка $orderNumber изменена:";
+        }
+
+        $text = <<<HTML
+$header
+
+📆 <b>Дата и время:</b> {$dateText}
+
+🅰️ <b>Откуда:</b> {$fromAddress}
+
+🅱️ <b>Куда:</b> {$toAddress}
+
+👥 <b>Пассажиры:</b> {$passengers}
+
+✈️ <b>Номер рейса:</b> {$flightNumber}
+
+ℹ️ <b>Дополнительные условия:</b> {$additionalConditions}
+
+💰 <b>Сумма:</b> {$sumText}
+HTML;
+
+        return $text;
+    }
+
+    /**
+     * Формирует детальный текст заявки для личных сообщений водителю с поддержкой изменений
+     * Включает все поля: пассажиры, номер рейса, класс авто, дополнительные условия
+     */
+    public static function orderTextForDriverWithChangesNew(
+            array $deal,
+            ?int $newSum = null,
+            ?string $newFromAddress = null,
+            ?string $newToAddress = null,
+            ?string $newDate = null,
+            ?string $newAdditionalConditions = null,
+            ?string $newPassengers = null,
+            ?string $newFlightNumber = null,
+            ?string $newCarClass = null
+    ): string {
+        $additionalConditions = '';
+        if (!empty($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
+            if (is_array($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
+                $additionalConditions = implode(" | ", $deal[botManager::ADDITIONAL_CONDITIONS_FIELD]);
+            } else {
+                $additionalConditions = $deal[botManager::ADDITIONAL_CONDITIONS_FIELD];
+            }
+        }
+        
+        // Обрабатываем изменения дополнительных условий
+        if ($newAdditionalConditions !== null) {
+            $oldAdditionalConditions = $deal[botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE];
+            if (is_array($oldAdditionalConditions)) {
+                $oldAdditionalConditions = implode(" | ", $oldAdditionalConditions);
+            }
+            $additionalConditions = "<s>{$oldAdditionalConditions}</s> ➔ {$newAdditionalConditions}";
+        }
+        
+        // Форматируем дату в удобочитаемый вид
+        $dateText = $deal[botManager::TRAVEL_DATE_TIME_FIELD];
+        if ($dateText) {
+            $date = new \DateTime($dateText);
+            $dateText = $date->format('d.m.Y H:i');
+        }
+        
+        if ($newDate !== null) {
+            // Форматируем старую дату
+            $oldDate = $deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE];
+            if ($oldDate) {
+                $oldDateFormatted = (new \DateTime($oldDate))->format('d.m.Y H:i');
+            } else {
+                $oldDateFormatted = $oldDate;
+            }
+            
+            // Форматируем новую дату
+            $newDateFormatted = $newDate;
+            if ($newDate) {
+                $newDateFormatted = (new \DateTime($newDate))->format('d.m.Y H:i');
+            }
+            
+            $dateText = "<s>{$oldDateFormatted}</s> ➔ {$newDateFormatted}";
+        }
+
+        // Форматируем адрес отправления
+        $fromAddress = $deal[botManager::ADDRESS_FROM_FIELD];
+        if ($newFromAddress !== null) {
+            $fromAddress = "<s>{$deal[botManager::ADDRESS_FROM_FIELD_SERVICE]}</s> ➔ {$newFromAddress}";
+        }
+
+        // Форматируем адрес назначения
+        $toAddress = $deal[botManager::ADDRESS_TO_FIELD];
+        if ($newToAddress !== null) {
+            $toAddress = "<s>{$deal[botManager::ADDRESS_TO_FIELD_SERVICE]}</s> ➔ {$newToAddress}";
+        }
+
+        // Форматируем сумму
+        $sumText = $deal[botManager::DRIVER_SUM_FIELD];
+        if ($newSum !== null) {
+            $oldSum = $deal[botManager::DRIVER_SUM_FIELD_SERVICE];
+            $sumText = "<s>{$oldSum}</s> ➔ {$newSum} руб.";
+        } else {
+            // Убираем |RUB из суммы
+            if ($sumText) {
+                $sumText = str_replace('|RUB', '', $sumText);
+            }
+        }
+        
+        // Получаем информацию о пассажирах (показываем)
+        $passengers = 'Не указано';
+        if (!empty($deal['UF_CRM_1751271798896'])) {
+            // Если поле - массив, преобразуем в строку
+            if (is_array($deal['UF_CRM_1751271798896'])) {
+                $passengers = implode(", ", $deal['UF_CRM_1751271798896']);
+            } else {
+                $passengers = $deal['UF_CRM_1751271798896'];
+            }
+        }
+        
+        // Обрабатываем изменения пассажиров
+        if ($newPassengers !== null) {
+            $oldPassengers = $deal[botManager::PASSENGERS_FIELD_SERVICE];
+            if (is_array($oldPassengers)) {
+                $oldPassengers = implode(", ", $oldPassengers);
+            }
+            $passengers = "<s>{$oldPassengers}</s> ➔ {$newPassengers}";
+        }
+        
+        // Получаем информацию о номере рейса (показываем)
+        $flightNumber = 'Не указано';
+        if (!empty($deal[botManager::FLIGHT_NUMBER_FIELD])) {
+            $flightNumber = $deal[botManager::FLIGHT_NUMBER_FIELD];
+        }
+        
+        // Обрабатываем изменения номера рейса
+        if ($newFlightNumber !== null) {
+            $oldFlightNumber = $deal[botManager::FLIGHT_NUMBER_FIELD_SERVICE];
+            $flightNumber = "<s>{$oldFlightNumber}</s> ➔ {$newFlightNumber}";
+        }
+        
+        // Получаем информацию о классе автомобиля (показываем)
+        $carClassName = 'Не указано';
+        if (!empty($deal[botManager::CAR_CLASS_FIELD])) {
+            $carClassName = botManager::getCarClassName((int)$deal[botManager::CAR_CLASS_FIELD]);
+        }
+        
+        // Обрабатываем изменения класса автомобиля
+        if ($newCarClass !== null) {
+            $oldCarClassId = $deal[botManager::CAR_CLASS_FIELD_SERVICE];
+            $oldCarClassName = $oldCarClassId ? botManager::getCarClassName((int)$oldCarClassId) : 'Не указано';
+            $newCarClassName = botManager::getCarClassName((int)$newCarClass);
+            $carClassName = "<s>{$oldCarClassName}</s> ➔ {$newCarClassName}";
+        }
+        
+        // Используем TITLE как номер заявки, а не ID сделки
+        $orderNumber = $deal['TITLE'] ?? $deal['ID'];
+        // Очищаем номер от лишнего текста (может быть "Заявка: 999999")
+        if (strpos($orderNumber, ':') !== false) {
+            $orderNumber = trim(explode(':', $orderNumber)[1]);
+        }
+        
+        $header = "🚗 Ваша заявка #$orderNumber";
+        if($newSum || $newToAddress || $newFromAddress || $newDate || $newAdditionalConditions || $newPassengers || $newFlightNumber || $newCarClass) {
+            $header = "🚗 Заявка $orderNumber изменена:";
+        }
+
+        $text = <<<HTML
+$header
+
+📆 <b>Дата и время:</b> {$dateText}
+
+🚗 <b>Класс автомобиля:</b> {$carClassName}
+
+🅰️ <b>Откуда:</b> {$fromAddress}
+
+🅱️ <b>Куда:</b> {$toAddress}
+
+👥 <b>Пассажиры:</b> {$passengers}
+
+✈️ <b>Номер рейса:</b> {$flightNumber}
+
+ℹ️ <b>Дополнительные условия:</b> {$additionalConditions}
+
+💰 <b>Сумма:</b> {$sumText}
+HTML;
+
+        return $text;
+    }
+
+    /**
+     * Формирует упрощенное сообщение об изменениях - показывает только измененные поля
+     */
+    public static function orderTextForDriverWithChangesSimple(array $deal, array $changes): string {
+        // Получаем номер заявки
+        $orderNumber = $deal['TITLE'] ?? $deal['ID'];
+        if (strpos($orderNumber, ':') !== false) {
+            $orderNumber = trim(explode(':', $orderNumber)[1]);
+        }
+        
+        $header = "🚗 Заявка $orderNumber изменена:";
+        $text = $header . "\n\n";
+        
+        // Показываем только измененные поля
+        foreach ($changes as $fieldType => $newValue) {
+            switch ($fieldType) {
+                case 'sum':
+                    $oldValue = $deal[botManager::DRIVER_SUM_FIELD_SERVICE];
+                    $text .= "💰 <b>Сумма:</b> <s>{$oldValue}</s> ➔ {$newValue} руб.\n\n";
+                    break;
+                    
+                case 'addressFrom':
+                    $oldValue = $deal[botManager::ADDRESS_FROM_FIELD_SERVICE];
+                    $text .= "🅰️ <b>Откуда:</b> <s>{$oldValue}</s> ➔ {$newValue}\n\n";
+                    break;
+                    
+                case 'addressTo':
+                    $oldValue = $deal[botManager::ADDRESS_TO_FIELD_SERVICE];
+                    $text .= "🅱️ <b>Куда:</b> <s>{$oldValue}</s> ➔ {$newValue}\n\n";
+                    break;
+                    
+                case 'date':
+                    $oldValue = $deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE];
+                    if ($oldValue) {
+                        $oldDate = (new \DateTime($oldValue))->format('d.m.Y H:i');
+                    } else {
+                        $oldDate = $oldValue;
+                    }
+                    if ($newValue) {
+                        $newDate = (new \DateTime($newValue))->format('d.m.Y H:i');
+                    } else {
+                        $newDate = $newValue;
+                    }
+                    $text .= "📆 <b>Дата и время:</b> <s>{$oldDate}</s> ➔ {$newDate}\n\n";
+                    break;
+                    
+                case 'additionalConditions':
+                    $oldValue = $deal[botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE];
+                    if (is_array($oldValue)) {
+                        $oldValue = implode(" | ", $oldValue);
+                    }
+                    $text .= "ℹ️ <b>Дополнительные условия:</b> <s>{$oldValue}</s> ➔ {$newValue}\n\n";
+                    break;
+                    
+                case 'passengers':
+                    $oldValue = $deal[botManager::PASSENGERS_FIELD_SERVICE];
+                    if (is_array($oldValue)) {
+                        $oldValue = implode(", ", $oldValue);
+                    }
+                    $text .= "👥 <b>Пассажиры:</b> <s>{$oldValue}</s> ➔ {$newValue}\n\n";
+                    break;
+                    
+                case 'flightNumber':
+                    $oldValue = $deal[botManager::FLIGHT_NUMBER_FIELD_SERVICE];
+                    $text .= "✈️ <b>Номер рейса:</b> <s>{$oldValue}</s> ➔ {$newValue}\n\n";
+                    break;
+                    
+                case 'carClass':
+                    $oldValue = $deal[botManager::CAR_CLASS_FIELD_SERVICE];
+                    $oldCarClassName = $oldValue ? botManager::getCarClassName((int)$oldValue) : 'Не указано';
+                    $newCarClassName = botManager::getCarClassName((int)$newValue);
+                    $text .= "🚗 <b>Класс автомобиля:</b> <s>{$oldCarClassName}</s> ➔ {$newCarClassName}\n\n";
+                    break;
+            }
+        }
+        
+        return trim($text);
     }
 }
