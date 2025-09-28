@@ -334,8 +334,15 @@ class botManager {
                 
                 $driverName = trim($assignedDriver['NAME'] . ' ' . $assignedDriver['LAST_NAME']);
                 
+                // Получаем правильный номер заказа из TITLE
+                $orderNumber = $deal['TITLE'] ?? $dealId;
+                // Убираем префикс "Заявка: " если есть
+                if (strpos($orderNumber, 'Заявка: ') === 0) {
+                    $orderNumber = substr($orderNumber, 8);
+                }
+                
                 // Отправляем уведомление в общий чат о том, кто взял заявку
-                $groupMessage = "✅ Заявку #$dealId взял водитель: <b>$driverName</b>";
+                $groupMessage = "✅ Заявку #$orderNumber взял водитель: <b>$driverName</b>";
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
                     'text' => $groupMessage,
