@@ -257,23 +257,13 @@ class botManager {
                     'reply_markup' => json_encode(['inline_keyboard' => []])
                 ]);
                 
-                // Отправляем детальную информацию в личку
-                $detailedMessage = botManager::orderTextForDriver($deal);
-                $privateKeyboard = [
-                    'inline_keyboard' => [
-                        [
-                            ['text' => '✅ Начать выполнение', 'callback_data' => "start_$dealId"],
-                            ['text' => '❌ Отказаться', 'callback_data' => "reject_$dealId"]
-                        ]
-                    ]
-                ];
-                
-                $telegram->sendMessage([
-                    'chat_id' => $telegramId,
-                    'text' => $detailedMessage,
-                    'reply_markup' => json_encode($privateKeyboard),
-                    'parse_mode' => 'HTML'
-                ]);
+                if (!botManager::sendDriverControlMessage($telegram, $dealId, $telegramId, $deal)) {
+                    file_put_contents(
+                        '/var/www/html/meetRiedeBot/logs/webhook_debug.log',
+                        date('Y-m-d H:i:s') . " - Failed to send driver controls for deal $dealId\n",
+                        FILE_APPEND
+                    );
+                }
                 
                 $telegram->answerCallbackQuery([
                     'callback_query_id' => $result->callbackQuery->id,
@@ -402,22 +392,13 @@ class botManager {
                     ]);
                     
                     // Отправляем детальную информацию в личку
-                    $detailedMessage = botManager::orderTextForDriver($deal);
-                    $privateKeyboard = [
-                        'inline_keyboard' => [
-                            [
-                                ['text' => '✅ Начать выполнение', 'callback_data' => "start_$dealId"],
-                                ['text' => '❌ Отказаться', 'callback_data' => "reject_$dealId"]
-                            ]
-                        ]
-                    ];
-                    
-                    $telegram->sendMessage([
-                        'chat_id' => $telegramId,
-                        'text' => $detailedMessage,
-                        'reply_markup' => json_encode($privateKeyboard),
-                        'parse_mode' => 'HTML'
-                    ]);
+                    if (!botManager::sendDriverControlMessage($telegram, $dealId, $telegramId, $deal)) {
+                        file_put_contents(
+                            '/var/www/html/meetRiedeBot/logs/webhook_debug.log',
+                            date('Y-m-d H:i:s') . " - Failed to send driver controls for deal $dealId\n",
+                            FILE_APPEND
+                        );
+                    }
                     
                     $telegram->answerCallbackQuery([
                         'callback_query_id' => $result->callbackQuery->id,
@@ -481,27 +462,13 @@ class botManager {
                 // Отправляем детальную информацию водителю в личные сообщения
                 file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Generating detailed message\n", FILE_APPEND);
                 
-                $detailedMessage = botManager::orderTextForDriver($deal);
-                
                 file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Message generated, sending to Telegram ID: $telegramId\n", FILE_APPEND);
-                
-                $privateKeyboard = [
-                    'inline_keyboard' => [
-                        [
-                            ['text' => '✅ Начать выполнение', 'callback_data' => "start_$dealId"],
-                            ['text' => '❌ Отказаться', 'callback_data' => "reject_$dealId"]
-                        ]
-                    ]
-                ];
-                
+
                 try {
-                    $result = $telegram->sendMessage([
-                        'chat_id' => $telegramId,
-                        'text' => $detailedMessage,
-                        'reply_markup' => json_encode($privateKeyboard),
-                        'parse_mode' => 'HTML'
-                    ]);
-                    
+                    if (!botManager::sendDriverControlMessage($telegram, $dealId, $telegramId, $deal)) {
+                        throw new Exception('sendDriverControlMessage returned false');
+                    }
+
                     file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Private message sent successfully\n", FILE_APPEND);
                 } catch (Exception $e) {
                     file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error sending private message: " . $e->getMessage() . "\n", FILE_APPEND);
@@ -1027,6 +994,69 @@ class botManager {
                 'text' => '', // можно добавить всплывающее уведомление
                 'show_alert' => false
         ]);
+    }
+
+    /**
+     * Отправляет водителю карточку заявки с кнопками управления.
+     */
+    public static function sendDriverControlMessage(Api $telegram, int $dealId, ?int $driverTelegramId = null, ?array $dealData = null, bool $allowReject = true): bool
+    {
+        require_once(__DIR__ . '/crest/crest.php');
+
+        $deal = $dealData ?? \CRest::call('crm.deal.get', [
+            'id' => $dealId,
+            'select' => ['*', 'UF_CRM_1751271798896', botManager::FLIGHT_NUMBER_FIELD]
+        ])['result'];
+
+        if (empty($deal['ID'])) {
+            return false;
+        }
+
+        if ($driverTelegramId === null) {
+            if (empty($deal[botManager::DRIVER_ID_FIELD])) {
+                return false;
+            }
+
+            $driver = \CRest::call('crm.contact.get', [
+                'id' => $deal[botManager::DRIVER_ID_FIELD],
+                'select' => ['ID', botManager::DRIVER_TELEGRAM_ID_FIELD]
+            ])['result'];
+
+            if (empty($driver) || empty($driver[botManager::DRIVER_TELEGRAM_ID_FIELD])) {
+                return false;
+            }
+
+            $driverTelegramId = (int) $driver[botManager::DRIVER_TELEGRAM_ID_FIELD];
+        }
+
+        $buttons = [
+            Keyboard::inlineButton([
+                'text' => '✅ Начать выполнение',
+                'callback_data' => "start_$dealId",
+            ]),
+        ];
+
+        if ($allowReject) {
+            $buttons[] = Keyboard::inlineButton([
+                'text' => '❌ Отказаться',
+                'callback_data' => "reject_$dealId",
+            ]);
+        }
+
+        $keyboard = Keyboard::make()
+            ->inline()
+            ->row($buttons);
+
+        $messageText = botManager::orderTextForDriver($deal);
+
+        $result = $telegram->sendMessage([
+            'chat_id' => $driverTelegramId,
+            'text' => $messageText,
+            'reply_markup' => $keyboard,
+            'parse_mode' => 'HTML'
+        ]);
+
+        return $result && (!method_exists($result, 'isOk') || $result->isOk());
     }
 
     public static function commonMailing(int $dealId, Api $telegram, Update $result): void {

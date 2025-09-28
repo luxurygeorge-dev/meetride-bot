@@ -120,29 +120,11 @@ try {
                         'select' => ['*', 'UF_CRM_1751271798896', botManager::FLIGHT_NUMBER_FIELD]
                     ])['result'];
                     
-                    // Формируем сообщение для водителя
-                    $messageText = botManager::orderTextForDriver($dealFull);
-                    
-                    // Создаем клавиатуру
-                    $keyboard = [
-                        'inline_keyboard' => [
-                            [
-                                ['text' => '✅ Начать выполнение', 'callback_data' => "start_$dealId"],
-                                ['text' => '❌ Отказаться', 'callback_data' => "reject_$dealId"]
-                            ]
-                        ]
-                    ];
-                    
                     // Отправляем сообщение водителю
                     try {
-                        $result = $telegram->sendMessage([
-                            'chat_id' => $driverTelegramId,
-                            'text' => $messageText,
-                            'reply_markup' => json_encode($keyboard),
-                            'parse_mode' => 'HTML'
-                        ]);
-                        
-                        if ($result && $result->isOk()) {
+                        $result = botManager::sendDriverControlMessage($telegram, $dealId, $driverTelegramId, $dealFull);
+
+                        if ($result) {
                             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Message sent successfully to driver for deal $dealId\n", FILE_APPEND);
                             echo "Message sent to driver for deal $dealId\n";
                             
