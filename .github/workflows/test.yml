@@ -1,0 +1,38 @@
+name: Test Bot
+
+on:
+  push:
+    branches: [ development, staging ]
+  pull_request:
+    branches: [ development, staging ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: curl, json, mbstring
+        
+    - name: Install dependencies
+      run: composer install --no-dev --optimize-autoloader
+      
+    - name: Syntax check
+      run: |
+        php -l src/botManager.php
+        php -l src/index.php
+        
+    - name: Test configuration
+      run: |
+        php -r "if (file_exists('config/config.php')) { include 'config/config.php'; echo 'Config OK'; } else { echo 'Config missing'; exit 1; }"
+        
+    - name: Check logs directory
+      run: |
+        mkdir -p logs
+        touch logs/test.log
+        echo "Logs directory ready"
