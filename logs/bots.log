@@ -1,0 +1,9 @@
+2025-08-30 18:33:44,249 INFO [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8010
+ * Running on http://188.225.24.13:8010
+2025-08-30 18:33:44,249 INFO [33mPress CTRL+C to quit[0m
+2025-08-30 18:36:02,581 INFO 127.0.0.1 - - [30/Aug/2025 18:36:02] "GET /tg/health HTTP/1.1" 200 -
+2025-08-30 18:37:22,049 INFO 127.0.0.1 - - [30/Aug/2025 18:37:22] "GET /tg/health HTTP/1.1" 200 -
+2025-08-30 18:37:38,671 WARNING Unauthorized callback attempt from 127.0.0.1
+2025-08-30 18:37:38,673 INFO 127.0.0.1 - - [30/Aug/2025 18:37:38] "[31m[1mPOST /tg/callback HTTP/1.1[0m" 403 -

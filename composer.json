@@ -1,0 +1,16 @@
+{
+    "name": "meetride/telegram-bot",
+    "description": "MeetRide Telegram Bot System",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "longman/telegram-bot": "^0.70",
+        "telegram-bot/api": "^2.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "Store\\": "."
+        }
+    }
+}
+
