@@ -306,7 +306,7 @@ class botManager {
                 // Уведомляем ответственного о незарегистрированном водителе
                 \CRest::call('im.notify.system.add', [
                     'USER_ID' => $deal['ASSIGNED_BY_ID'],
-                    'MESSAGE' => "⚠️ Заявку #{$dealId} взял незарегистрированный водитель: $telegramName (Telegram ID: $telegramId). " .
+                    'MESSAGE' => "⚠️ Заявку #{$orderNumber} взял незарегистрированный водитель: $telegramName (Telegram ID: $telegramId). " .
                                 "<a href='https://meetride.bitrix24.ru/crm/deal/details/$dealId/'>Открыть заявку</a>"
                 ]);
                 
