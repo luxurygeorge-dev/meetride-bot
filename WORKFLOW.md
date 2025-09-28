@@ -24,8 +24,21 @@ git checkout -b feature/new-feature
 git add .
 git commit -m "Add new feature"
 git push origin feature/new-feature
+```
 
-# Создать Pull Request в development
+### 2. **Testing (Тестирование)**
+```bash
+# Настроить тестовую среду (один раз)
+./scripts/setup-test-environment.sh
+
+# Деплой в тестовую среду
+./scripts/deploy-to-test.sh
+
+# Тестирование
+./scripts/test-bot.sh
+
+# Проверка по чек-листу
+# См. TESTING_CHECKLIST.md
 ```
 
 ### 2. **Staging (Тестирование)**
