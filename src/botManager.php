@@ -30,7 +30,7 @@ class botManager {
     public const TRAVEL_STARTED_STAGE_ID         = 'EXECUTING'; // Заявка выполняется
     public const FINISH_STAGE_ID         = 'FINAL_INVOICE';
     public const DRIVER_CONTACT_TYPE            = 'UC_C7O5J7';
-    public const DRIVERS_GROUP_CHAT_ID          = -1002544521661; // Боевая группа водителей
+    public const DRIVERS_GROUP_CHAT_ID          = -1001649190984; // ТЕСТОВАЯ группа водителей (НЕ МЕНЯТЬ НА БОЕВУЮ!)
     
     // Поля для системы напоминаний (исправленные ID)
     public const REMINDER_SENT_FIELD            = 'UF_CRM_1758709126';
@@ -223,6 +223,10 @@ class botManager {
                 
                 // Отправляем уведомление в общий чат (имя из CRM)  
                 $orderNumber = $deal['TITLE'] ?? $dealId;
+                // Убираем префикс "Заявка: " если есть
+                if (strpos($orderNumber, 'Заявка: ') === 0) {
+                    $orderNumber = substr($orderNumber, 8);
+                }
                 $groupMessage = "✅ Заявку #$orderNumber взял водитель: <b>$driverName</b>";
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
@@ -281,6 +285,10 @@ class botManager {
                 
                 // Отправляем уведомление в общий чат (имя из Telegram)
                 $orderNumber = $deal['TITLE'] ?? $dealId;
+                // Убираем префикс "Заявка: " если есть
+                if (strpos($orderNumber, 'Заявка: ') === 0) {
+                    $orderNumber = substr($orderNumber, 8);
+                }
                 $groupMessage = "✅ Заявку #$orderNumber взял: <b>$telegramName</b>";
                 $telegram->sendMessage([
                     'chat_id' => $chatId,
