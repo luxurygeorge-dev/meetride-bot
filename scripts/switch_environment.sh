@@ -96,3 +96,4 @@ if [ -f "$BACKUP_MANAGER" ]; then
         echo -e "${YELLOW}🟡 $BACKUP_MANAGER: ТЕСТОВЫЙ ($TEST_CHAT_ID)${NC}"
     fi
 fi
+

@@ -85,3 +85,4 @@ if [ "$ENVIRONMENT" = "production" ]; then
     echo -e "${RED}⚠️  ВНИМАНИЕ: Деплой в PRODUCTION!${NC}"
     echo -e "${YELLOW}   Убедитесь, что все тесты пройдены!${NC}"
 fi
+

@@ -97,3 +97,4 @@ tail -f /var/www/html/meetRiedeBot/logs/webhook_debug.log
 1. Проверьте логи в `/var/www/html/meetRiedeBot/logs/`
 2. Убедитесь в корректности конфигурации
 3. Проверьте статус webhook'ов в Bitrix24
+

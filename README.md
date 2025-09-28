@@ -93,3 +93,4 @@ https://your-domain.com/meetride-bot/index.php?dealId={{ID}}&stage={{Стади�
 1. Логи в `logs/`
 2. Настройки в `config/`
 3. Статус webhook: `curl https://api.telegram.org/bot{TOKEN}/getWebhookInfo`
+
