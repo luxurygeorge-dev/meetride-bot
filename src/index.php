@@ -85,20 +85,26 @@ try {
             $log_message = date('Y-m-d H:i:s') . " - Checking for field changes in deal $dealId (stage: " . $deal['STAGE_ID'] . ")\n";
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
             
+            // Получаем OLD значения из webhook
+            $oldValues = $_REQUEST['data']['FIELDS']['OLD'] ?? null;
+
             // Вызываем обработку изменений
-            botManager::dealChangeHandle($dealId, $telegram, $update);
-            
+            botManager::dealChangeHandle($dealId, $telegram, $update, $oldValues);
+
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - dealChangeHandle completed for deal $dealId\n", FILE_APPEND);
-            
+
         } elseif ($deal && $deal['STAGE_ID'] == 'EXECUTING') {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal $dealId is EXECUTING\n", FILE_APPEND);
             // Проверяем изменения в полях для стадии "Заявка выполняется"
             echo "Deal $dealId stage is: " . $deal['STAGE_ID'] . " - checking for field changes\n";
             $log_message = date('Y-m-d H:i:s') . " - Checking for field changes in deal $dealId (stage: " . $deal['STAGE_ID'] . ")\n";
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
-            
+
+            // Получаем OLD значения из webhook
+            $oldValues = $_REQUEST['data']['FIELDS']['OLD'] ?? null;
+
             // Вызываем обработку изменений
-            botManager::dealChangeHandle($dealId, $telegram, $update);
+            botManager::dealChangeHandle($dealId, $telegram, $update, $oldValues);
             
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - dealChangeHandle completed for deal $dealId\n", FILE_APPEND);
             
