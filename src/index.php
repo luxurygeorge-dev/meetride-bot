@@ -8,8 +8,8 @@ error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Подключаем библиотеки
-include('vendor/autoload.php');
-require_once(__DIR__ . '/botManager.php');
+include(__DIR__ . '/../vendor/autoload.php');
+require_once(__DIR__ . '/../botManager.php');
 
 use Telegram\Bot\Api;
 use Telegram\Bot\Objects\Update;
@@ -26,10 +26,20 @@ try {
     $log_message = date('Y-m-d H:i:s') . " - Event check: " . (isset($_REQUEST['event']) ? $_REQUEST['event'] : 'NO_EVENT') . "\n";
     file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
     
-    // Проверяем события от Bitrix24
+    // ТОЛЬКО Bitrix24 webhooks (event есть ТОЛЬКО у Bitrix24)
     if (!empty($_REQUEST['event']) && $_REQUEST['event'] == 'ONCRMDEALUPDATE' && !empty($_REQUEST['data']['FIELDS']['ID'])) {
         $log_message = date('Y-m-d H:i:s') . " - ONCRMDEALUPDATE event detected (handler: " . ($_REQUEST['event_handler_id'] ?? 'unknown') . ")\n";
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
+        
+        // Проверка токена безопасности (опционально)
+        $expectedToken = 'ancn7qxhagfsifwxkcoo7s04tfc8q2ez';
+        $receivedToken = $_REQUEST['auth']['application_token'] ?? '';
+        if (!empty($expectedToken) && $receivedToken !== $expectedToken) {
+            $log_message = date('Y-m-d H:i:s') . " - Invalid token received: $receivedToken\n";
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
+            http_response_code(403);
+            exit('Invalid token');
+        }
         
         // Обрабатываем только события от handler_id = 3 (избегаем дублирования)
         if ($_REQUEST['event_handler_id'] != '3') {
@@ -42,7 +52,7 @@ try {
         echo "Processing deal update: $dealId\n";
         
         // Получаем данные о сделке
-        require_once(__DIR__ . '/crest/crest.php');
+        require_once('/home/telegramBot/crest/crest.php');
         $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
         
         $log_message = date('Y-m-d H:i:s') . " - Deal $dealId stage: " . ($deal['STAGE_ID'] ?? 'UNKNOWN') . "\n";
@@ -139,50 +149,14 @@ try {
         }
         
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
-        exit;
+        
+        http_response_code(200);
+        exit('OK - Manual trigger processed');
     }
     
-    // Обработка входящих webhook'ов от Telegram
-    if (empty($_REQUEST['dealId'])) {
-        // Получаем JSON данные от Telegram
-        $input = file_get_contents('php://input');
-        $data = json_decode($input, true);
-        
-        $log_message = date('Y-m-d H:i:s') . " - Telegram input: " . $input . "\n";
-        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
-        
-        if ($data && isset($data['callback_query'])) {
-            echo "Processing callback query\n";
-            
-            $log_message = date('Y-m-d H:i:s') . " - Processing callback: " . $data['callback_query']['data'] . "\n";
-            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
-            
-            $telegram = new Api('7529690360:AAHED5aKmuKjjfFQPRI-0RQ8DlxlZARA2O4');
-            
-            // Создаем объект Update из данных
-            $update = new \Telegram\Bot\Objects\Update($data);
-            
-            // Обрабатываем callback
-            try {
-                botManager::buttonHanlde($telegram, $update);
-                $log_message = date('Y-m-d H:i:s') . " - buttonHanlde completed successfully\n";
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
-            } catch (Exception $e) {
-                $log_message = date('Y-m-d H:i:s') . " - buttonHanlde error: " . $e->getMessage() . "\n";
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
-                echo "Error in buttonHanlde: " . $e->getMessage() . "\n";
-            }
-            
-        } elseif ($data && isset($data['message'])) {
-            echo "Processing message\n";
-            // Обработка обычных сообщений, если нужно
-        } else {
-            echo "No valid Telegram update\n";
-        }
-        exit;
-    }
-    
-    echo "No action needed\n";
+    // Если сюда попал - неизвестный запрос
+    http_response_code(400);
+    echo "Bad Request - Use webhook.php for Telegram callbacks";
     
 } catch (Exception $e) {
     echo "ERROR: " . $e->getMessage() . "\n";

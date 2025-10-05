@@ -23,7 +23,6 @@ class botManager {
     public const INTERMEDIATE_POINTS_FIELD      = 'UF_CRM_1754228146'; // Промежуточные точки
     public const FLIGHT_NUMBER_FIELD            = 'UF_CRM_1751271774391'; // Номер рейса
     public const CAR_CLASS_FIELD                = 'UF_CRM_1751271728682'; // Класс автомобиля
-    public const INTERMEDIATE_POINTS_FIELD      = 'UF_CRM_1751822573510'; // Промежуточные точки
     public const DRIVER_SUM_FIELD               = 'UF_CRM_1751271862251';
     public const DRIVER_SUM_FIELD_SERVICE       = 'UF_CRM_1751638441407';
     public const TRAVEL_DATE_TIME_FIELD         = 'UF_CRM_1751269222959';
@@ -46,7 +45,7 @@ class botManager {
     public const REMINDER_NOTIFICATION_SENT_FIELD = 'UF_CRM_1758710216';
 
     public static function newDealMessage(int $dealid, $telegram): bool {
-        require_once('/home/telegramBot/crest/crest.php');
+        if (!class_exists("CRest")) { require_once("/home/telegramBot/crest/crest.php"); }
         $deal = \CRest::call('crm.deal.get', [
             'id' => $dealid,
             'select' => ['*', botManager::CAR_CLASS_FIELD] // Получаем все поля включая TITLE и класс авто
@@ -77,10 +76,16 @@ class botManager {
         ];
 
         // Отправляем в общий чат водителей (БЕЗ пассажиров!)
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Preparing message for group\n", FILE_APPEND);
+        
+        $messageText = botManager::orderTextForGroup($deal, $driverName);
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Sending message to group\n", FILE_APPEND);
+        
         try {
             $result = $telegram->sendMessage([
                 'chat_id'      => botManager::DRIVERS_GROUP_CHAT_ID,
-                'text'         => botManager::orderTextForGroup($deal, $driverName),
+                'text'         => $messageText,
                 'reply_markup' => json_encode($keyboard),
                 'parse_mode'   => 'HTML',
             ]);
@@ -94,7 +99,7 @@ class botManager {
     }
 
     public static function buttonHanlde($telegram, $result) {
-        require_once(__DIR__ . '/crest/crest.php');
+        if (!class_exists("CRest")) { require_once('/home/telegramBot/crest/crest.php'); }
 
         $message = $result->getMessage();
         $chatId = $message->getChat()->getId();
@@ -112,7 +117,7 @@ class botManager {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal received: " . ($deal ? 'YES' : 'NO') . ", Stage: " . ($deal['STAGE_ID'] ?? 'UNKNOWN') . "\n", FILE_APPEND);
             if(empty($deal['ID'])) {
                 $telegram->answerCallbackQuery([
-                        'callback_query_id' => $result->callbackQuery->id,
+                        'callback_query_id' => $result->get('callback_query')['id'],
                         'text' => '', // можно добавить всплывающее уведомление
                         'show_alert' => false
                 ]);
@@ -132,7 +137,7 @@ class botManager {
                         'text'    => "Заявка недоступна",
                 ]);
                 $telegram->answerCallbackQuery([
-                        'callback_query_id' => $result->callbackQuery->id,
+                        'callback_query_id' => $result->get('callback_query')['id'],
                         'text' => '', // можно добавить всплывающее уведомление
                         'show_alert' => false
                 ]);
@@ -164,7 +169,7 @@ class botManager {
     public static function driverAcceptHandle ($telegram, $result, int $dealId): void {
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - driverAcceptHandle started for deal $dealId\n", FILE_APPEND);
         
-        require_once(__DIR__ . '/crest/crest.php');
+        if (!class_exists("CRest")) { require_once(__DIR__ . "/crest/crest.php"); }
         $deal = \CRest::call('crm.deal.get', [
             'id' => $dealId,
             'select' => ['*', 'UF_CRM_1751271798896', botManager::FLIGHT_NUMBER_FIELD] // Добавляем поля "Пассажиры" и "Номер рейса"
@@ -181,16 +186,20 @@ class botManager {
         }
 
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Getting message and chat info\n", FILE_APPEND);
-        $message = $result->getMessage();
-        $chatId = $message->getChat()->getId();
+        $callbackQuery = $result->get('callback_query');
+        $chatId = $callbackQuery->get('message')['chat']['id'];
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - ChatId: $chatId\n", FILE_APPEND);
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Current driver ID: " . ($deal[botManager::DRIVER_ID_FIELD] ?? 'EMPTY') . "\n", FILE_APPEND);
         
-        // НОВАЯ ЛОГИКА: Проверяем водителя
+        // Получаем Telegram ID нажавшего
         $currentDriverId = $deal[botManager::DRIVER_ID_FIELD];
         $telegramId = $result->callbackQuery->from->id;
+        $message = $result->getMessage();
         
-        // НОВАЯ ЛОГИКА: Любой может взять заявку
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Current driver ID: $currentDriverId, Telegram ID: $telegramId\n", FILE_APPEND);
+        
+        // ПРАВИЛЬНАЯ ЛОГИКА:
+        // 1. Если водитель НЕ назначен (не должно быть при правильной настройке)
         if(!$currentDriverId) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - No driver assigned, processing new request\n", FILE_APPEND);
             
@@ -339,14 +348,11 @@ class botManager {
                 ]);
             }
             
-            return; // Завершаем выполнение функции
-        } else {
-            // Водитель уже назначен - проверяем, тот ли это водитель
-            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Driver already assigned (ID: $currentDriverId), checking if it's the same driver\n", FILE_APPEND);
-            
-            // НОВАЯ ЛОГИКА: Если назначен контакт ID 9, любой зарегистрированный водитель может взять заявку
-            // ЭТА ПРОВЕРКА ДОЛЖНА БЫТЬ ПЕРВОЙ!
-            if ($currentDriverId == 9) {
+            return;
+        }
+        
+        // 2. Если назначен технический водитель ID 9 - любой зарегистрированный может взять
+        if ($currentDriverId == 9) {
                 file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Driver ID 9 assigned, allowing any registered driver to take the deal\n", FILE_APPEND);
                 
                 // Ищем водителя по Telegram ID
@@ -422,7 +428,7 @@ class botManager {
                     ]);
                     
                     $telegram->answerCallbackQuery([
-                        'callback_query_id' => $result->callbackQuery->id,
+                        'callback_query_id' => $result->get('callback_query')['id'],
                         'text' => 'Заявка принята! Детали отправлены в личные сообщения.',
                         'show_alert' => true
                     ]);
@@ -432,124 +438,156 @@ class botManager {
                     file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Unregistered driver trying to take deal from ID 9, rejecting\n", FILE_APPEND);
                     
                     $telegram->answerCallbackQuery([
-                        'callback_query_id' => $result->callbackQuery->id,
+                        'callback_query_id' => $result->get('callback_query')['id'],
                         'text' => 'Только зарегистрированные водители могут взять эту заявку.',
                         'show_alert' => true
                     ]);
                 }
                 
-                return; // Завершаем выполнение функции
+                return;
             }
+        
+        // 3. Назначен конкретный водитель (не ID 9) - проверяем, что это именно он
+        $assignedDriver = \CRest::call('crm.contact.get', [
+            'id' => $currentDriverId,
+            'select' => ['ID', 'NAME', 'LAST_NAME', botManager::DRIVER_TELEGRAM_ID_FIELD]
+        ])['result'];
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Assigned driver Telegram ID: " . ($assignedDriver[botManager::DRIVER_TELEGRAM_ID_FIELD] ?? 'NONE') . "\n", FILE_APPEND);
+        
+        if (!$assignedDriver || $assignedDriver[botManager::DRIVER_TELEGRAM_ID_FIELD] != $telegramId) {
+            // Не тот водитель - отказываем
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Wrong driver tried to accept (expected: " . ($assignedDriver[botManager::DRIVER_TELEGRAM_ID_FIELD] ?? 'NONE') . ", got: $telegramId)\n", FILE_APPEND);
             
-            // Обычная логика для других водителей (не ID 9)
-            $assignedDriver = \CRest::call('crm.contact.get', [
-                'id' => $currentDriverId,
-                'select' => ['ID', 'NAME', 'LAST_NAME', botManager::DRIVER_TELEGRAM_ID_FIELD]
-            ])['result'];
-            
-            if ($assignedDriver && $assignedDriver[botManager::DRIVER_TELEGRAM_ID_FIELD] == $telegramId) {
-                // Это тот же водитель - отправляем ему детали в личку + обновляем группу
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Same driver clicking again, sending details and updating group\n", FILE_APPEND);
-                
-                $driverName = trim($assignedDriver['NAME'] . ' ' . $assignedDriver['LAST_NAME']);
-                
-                // Убираем кнопки с исходного сообщения СРАЗУ (защита от спама)
-                $telegram->editMessageReplyMarkup([
-                    'chat_id' => $chatId,
-                    'message_id' => $message->getMessageId(),
-                    'reply_markup' => json_encode(['inline_keyboard' => []])
-                ]);
-                
-                // Проверяем, отправлялось ли уже уведомление о взятии заявки
-                $orderNumber = $deal['TITLE'] ?? $dealId;
-                if (strpos($orderNumber, 'Заявка: ') === 0) {
-                    $orderNumber = substr($orderNumber, 8);
-                }
-                
-                // Отправляем уведомление в общий чат ТОЛЬКО если кнопки еще были активны
-                // (если кнопки уже удалены, значит уведомление уже отправлялось)
-                try {
-                    $groupMessage = "✅ Заявку #$orderNumber взял водитель: <b>$driverName</b>";
-                    $telegram->sendMessage([
-                        'chat_id' => $chatId,
-                        'text' => $groupMessage,
-                        'parse_mode' => 'HTML'
-                    ]);
-                } catch (Exception $e) {
-                    // Игнорируем ошибки отправки (возможно, сообщение уже было отправлено)
-                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Group message already sent, ignoring\n", FILE_APPEND);
-                }
-                
-                // Отправляем детальную информацию водителю в личные сообщения
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Generating detailed message\n", FILE_APPEND);
-                
-                $detailedMessage = botManager::orderTextForDriver($deal);
-                
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Message generated, sending to Telegram ID: $telegramId\n", FILE_APPEND);
-                
-                $privateKeyboard = [
-                    'inline_keyboard' => [
-                        [
-                            ['text' => '✅ Начать выполнение', 'callback_data' => "start_$dealId"],
-                            ['text' => '❌ Отказаться', 'callback_data' => "reject_$dealId"]
-                        ]
-                    ]
-                ];
-                
-                try {
-                    $result = $telegram->sendMessage([
-                        'chat_id' => $telegramId,
-                        'text' => $detailedMessage,
-                        'reply_markup' => json_encode($privateKeyboard),
-                        'parse_mode' => 'HTML'
-                    ]);
-                    
-                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Private message sent successfully\n", FILE_APPEND);
-                } catch (Exception $e) {
-                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error sending private message: " . $e->getMessage() . "\n", FILE_APPEND);
-                }
-                
-                // Обновляем стадию заявки в Битрикс24
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Updating deal stage to DRIVER_ACCEPTED\n", FILE_APPEND);
-                
-                $dealUpdate = \CRest::call('crm.deal.update', ['id' => $dealId, 'fields'=>[
-                    'STAGE_ID'=>botManager::DRIVER_ACCEPTED_STAGE_ID, // Водитель взял заявку
-                    botManager::DRIVER_SUM_FIELD_SERVICE=>$deal[botManager::DRIVER_SUM_FIELD],
-                    botManager::ADDRESS_FROM_FIELD_SERVICE=>$deal[botManager::ADDRESS_FROM_FIELD],
-                    botManager::ADDRESS_TO_FIELD_SERVICE=>$deal[botManager::ADDRESS_TO_FIELD],
-                    botManager::TRAVEL_DATE_TIME_FIELD_SERVICE=>$deal[botManager::TRAVEL_DATE_TIME_FIELD],
-                    botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE=>$deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
-                    botManager::PASSENGERS_FIELD_SERVICE=>$deal['UF_CRM_1751271798896'],
-                    botManager::FLIGHT_NUMBER_FIELD_SERVICE=>$deal[botManager::FLIGHT_NUMBER_FIELD]
-                ]]);
-                
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal stage updated\n", FILE_APPEND);
-                
-                $telegram->answerCallbackQuery([
-                    'callback_query_id' => $result->callbackQuery->id,
-                    'text' => 'Детали заявки отправлены в личные сообщения.',
-                    'show_alert' => true
-                ]);
-            } else {
-                // Другой водитель - отказываем
-                $telegram->answerCallbackQuery([
-                    'callback_query_id' => $result->callbackQuery->id,
-                    'text' => 'Заявка уже принята другим водителем.',
-                    'show_alert' => true
-                ]);
-            }
+            $telegram->answerCallbackQuery([
+                'callback_query_id' => $result->callbackQuery->id,
+                'text' => 'Эта заявка назначена другому водителю.',
+                'show_alert' => true
+            ]);
+            return;
         }
+        
+        // 4. Это правильный водитель - принимаем заявку
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Correct driver accepting deal\n", FILE_APPEND);
+        
+        // СНАЧАЛА отвечаем на callback (быстро!)
+        try {
+            $telegram->answerCallbackQuery([
+                'callback_query_id' => $result->callbackQuery->id,
+                'text' => 'Заявка принята! Отправляем детали...',
+                'show_alert' => false
+            ]);
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Callback answered immediately\n", FILE_APPEND);
+        } catch (Exception $e) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error answering callback: " . $e->getMessage() . " (continuing anyway)\n", FILE_APPEND);
+        }
+        
+        $driverName = trim($assignedDriver['NAME'] . ' ' . $assignedDriver['LAST_NAME']);
+        
+        // Инициализируем SERVICE поля и меняем стадию на PREPAYMENT_INVOICE
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Updating stage to PREPAYMENT_INVOICE and initializing SERVICE fields\n", FILE_APPEND);
+        
+        \CRest::call('crm.deal.update', [
+            'id' => $dealId,
+            'fields' => [
+                'STAGE_ID' => botManager::DRIVER_ACCEPTED_STAGE_ID,
+                // Инициализируем SERVICE поля
+                botManager::DRIVER_SUM_FIELD_SERVICE => $deal[botManager::DRIVER_SUM_FIELD],
+                botManager::ADDRESS_FROM_FIELD_SERVICE => $deal[botManager::ADDRESS_FROM_FIELD],
+                botManager::ADDRESS_TO_FIELD_SERVICE => $deal[botManager::ADDRESS_TO_FIELD],
+                botManager::TRAVEL_DATE_TIME_FIELD_SERVICE => $deal[botManager::TRAVEL_DATE_TIME_FIELD],
+                botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE => $deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
+                botManager::PASSENGERS_FIELD_SERVICE => $deal['UF_CRM_1751271798896'],
+                botManager::FLIGHT_NUMBER_FIELD_SERVICE => $deal[botManager::FLIGHT_NUMBER_FIELD],
+                botManager::CAR_CLASS_FIELD_SERVICE => $deal[botManager::CAR_CLASS_FIELD]
+            ]
+        ]);
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Stage updated\n", FILE_APPEND);
+        
+        // Перезагружаем заявку
+        $deal = \CRest::call('crm.deal.get', [
+            'id' => $dealId,
+            'select' => ['*', 'UF_CRM_1751271798896', botManager::FLIGHT_NUMBER_FIELD]
+        ])['result'];
+        
+        // Удаляем кнопки из сообщения в группе (с обработкой ошибок)
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Removing buttons from group message\n", FILE_APPEND);
+        
+        try {
+            $telegram->editMessageReplyMarkup([
+                'chat_id' => $chatId,
+                'message_id' => $message->getMessageId(),
+                'reply_markup' => json_encode(['inline_keyboard' => []])
+            ]);
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Buttons removed successfully\n", FILE_APPEND);
+        } catch (Exception $e) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error removing buttons: " . $e->getMessage() . " (continuing anyway)\n", FILE_APPEND);
+        } catch (Error $e) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Fatal error removing buttons: " . $e->getMessage() . " (continuing anyway)\n", FILE_APPEND);
+        }
+        
+        // Отправляем уведомление в группу
+        $orderNumber = $deal['TITLE'] ?? $dealId;
+        if (strpos($orderNumber, 'Заявка: ') === 0) {
+            $orderNumber = substr($orderNumber, 8);
+        }
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Sending group notification\n", FILE_APPEND);
+        
+        $groupMessage = "✅ Заявку #$orderNumber принял водитель: <b>$driverName</b>";
+        $telegram->sendMessage([
+            'chat_id' => $chatId,
+            'text' => $groupMessage,
+            'parse_mode' => 'HTML'
+        ]);
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Group notification sent\n", FILE_APPEND);
+        
+        // Отправляем детали в ЛС водителю
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Sending details to driver private chat (ID: $telegramId)\n", FILE_APPEND);
+        
+        $detailedMessage = botManager::orderTextForDriver($deal);
+        $privateKeyboard = [
+            'inline_keyboard' => [
+                [
+                    ['text' => '✅ Начать выполнение', 'callback_data' => "start_$dealId"],
+                    ['text' => '❌ Отказаться', 'callback_data' => "reject_$dealId"]
+                ]
+            ]
+        ];
+        
+        try {
+            $telegram->sendMessage([
+                'chat_id' => $telegramId,
+                'text' => $detailedMessage,
+                'reply_markup' => json_encode($privateKeyboard),
+                'parse_mode' => 'HTML'
+            ]);
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Private message sent successfully\n", FILE_APPEND);
+        } catch (Exception $e) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error sending private message: " . $e->getMessage() . "\n", FILE_APPEND);
+        }
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - All messages sent successfully\n", FILE_APPEND);
     }
 
     public static function cancelHandle(int $dealId, Api $telegram, Update $result) {
+        // СНАЧАЛА отвечаем на callback
+        $telegram->answerCallbackQuery([
+                'callback_query_id' => $result->callbackQuery->id,
+                'text' => 'Отменить выполнение?',
+                'show_alert' => false
+        ]);
+        
         $message = $result->getMessage();
         $chatId = $message->getChat()->getId();
         $keyboard = new Keyboard();
 
-        // 2. Включаем inline-режим (если нужны кнопки ВНУТРИ сообщения)
+        // Включаем inline-режим
         $keyboard->inline();
 
-        // 3. Добавляем строку с кнопками
+        // Добавляем строку с кнопками
         $keyboard->row([
                 Keyboard::inlineButton(['text' => 'Да', 'callback_data' => "cancelYes_$dealId"]),
                 Keyboard::inlineButton(['text' => 'Нет', 'callback_data' => "cancelNo_$dealId"]),
@@ -559,22 +597,24 @@ class botManager {
                 'message_id' => $message->getMessageId(),
                 'reply_markup' => $keyboard
         ]);
-        $telegram->answerCallbackQuery([
-                'callback_query_id' => $result->callbackQuery->id,
-                'text' => '', // можно добавить всплывающее уведомление
-                'show_alert' => false
-        ]);
     }
 
     public static function finishHandle(int $dealId, Api $telegram, Update $result) {
+        // СНАЧАЛА отвечаем на callback
+        $telegram->answerCallbackQuery([
+                'callback_query_id' => $result->callbackQuery->id,
+                'text' => 'Завершить заявку?',
+                'show_alert' => false
+        ]);
+        
         $message = $result->getMessage();
         $chatId = $message->getChat()->getId();
         $keyboard = new Keyboard();
 
-        // 2. Включаем inline-режим (если нужны кнопки ВНУТРИ сообщения)
+        // Включаем inline-режим
         $keyboard->inline();
 
-        // 3. Добавляем строку с кнопками
+        // Добавляем строку с кнопками
         $keyboard->row([
                 Keyboard::inlineButton(['text' => 'Да', 'callback_data' => "finishYes_$dealId"]),
                 Keyboard::inlineButton(['text' => 'Нет', 'callback_data' => "finishNo_$dealId"]),
@@ -584,16 +624,19 @@ class botManager {
                 'message_id' => $message->getMessageId(),
                 'reply_markup' => $keyboard
         ]);
-        $telegram->answerCallbackQuery([
-                'callback_query_id' => $result->callbackQuery->id,
-                'text' => '', // можно добавить всплывающее уведомление
-                'show_alert' => false
-        ]);
     }
 
     public static function finishYesHandle($dealId, Update $result, Api $telegram) {
+        // СНАЧАЛА отвечаем на callback
+        $telegram->answerCallbackQuery([
+                'callback_query_id' => $result->callbackQuery->id,
+                'text' => '✅ Заявка завершена!', 
+                'show_alert' => false
+        ]);
+        
         $message = $result->getMessage();
         $chatId = $message->getChat()->getId();
+        
         $dealUpdate = \CRest::call('crm.deal.update', ['id' => $dealId, 'fields'=>[
                 'STAGE_ID'=>botManager::FINISH_STAGE_ID,
         ]
@@ -604,13 +647,7 @@ class botManager {
                 'chat_id' => $chatId,
                 'message_id' => $message->getMessageId(),
                 'text' => $message->getText() . "\n\n✅ ЗАЯВКА ВЫПОЛНЕНА",
-                'reply_markup' => null  // Убираем все кнопки
-        ]);
-        
-        $telegram->answerCallbackQuery([
-                'callback_query_id' => $result->callbackQuery->id,
-                'text' => 'Заявка отмечена как выполненная!', 
-                'show_alert' => false
+                'reply_markup' => null
         ]);
     }
 
@@ -624,8 +661,8 @@ class botManager {
             ]);
             exit;
         }
-        $message = $result->getMessage();
-        $chatId = $message->getChat()->getId();
+        $message = $result->get('message');
+        $chatId = $message['chat']['id'];
         $dealUpdate = \CRest::call('crm.deal.update', [
                         'id'     => $dealId,
                         'fields' => ['STAGE_ID' => botManager::TRAVEL_STARTED_STAGE_ID],
@@ -654,7 +691,7 @@ class botManager {
     }
 
     public static function cancelYesHandle(Api $telegram, Update $result, int $dealId) {
-        require_once(__DIR__ . '/crest/crest.php');
+        if (!class_exists("CRest")) { require_once(__DIR__ . "/crest/crest.php"); }
         $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
         if(empty($deal['ID'])) {
             $telegram->answerCallbackQuery([
@@ -664,8 +701,8 @@ class botManager {
             ]);
             exit;
         }
-        $message = $result->getMessage();
-        $chatId = $message->getChat()->getId();
+        $message = $result->get('message');
+        $chatId = $message['chat']['id'];
 
 
         $keyboard = [
@@ -710,8 +747,8 @@ class botManager {
             ]);
             exit;
         }
-        $message = $result->getMessage();
-        $chatId = $message->getChat()->getId();
+        $message = $result->get('message');
+        $chatId = $message['chat']['id'];
         $dealUpdate = \CRest::call('crm.deal.update', [
                         'id'     => $dealId,
                         'fields' => ['STAGE_ID' => botManager::TRAVEL_STARTED_STAGE_ID],
@@ -740,17 +777,24 @@ class botManager {
     }
 
     public static function travelStartYesHandle(int $dealId, Api $telegram, Update $result) {
+        // СНАЧАЛА отвечаем на callback (быстро!)
+        $telegram->answerCallbackQuery([
+                'callback_query_id' => $result->callbackQuery->id,
+                'text' => 'Выполнение началось!',
+                'show_alert' => false
+        ]);
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - travelStartYesHandle: Callback answered\n", FILE_APPEND);
+        
         $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
         if(empty($deal['ID'])) {
-            $telegram->answerCallbackQuery([
-                    'callback_query_id' => $result->callbackQuery->id,
-                    'text' => '', // можно добавить всплывающее уведомление
-                    'show_alert' => false
-            ]);
             exit;
         }
         $message = $result->getMessage();
         $chatId = $message->getChat()->getId();
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - travelStartYesHandle: Updating stage to EXECUTING\n", FILE_APPEND);
+        
         $dealUpdate = \CRest::call('crm.deal.update', [
                         'id'     => $dealId,
                         'fields' => ['STAGE_ID' => botManager::TRAVEL_STARTED_STAGE_ID],
@@ -766,20 +810,20 @@ class botManager {
                 Keyboard::inlineButton(['text' => '🏁 Заявка выполнена', 'callback_data' => "finish_$dealId"]),
                 Keyboard::inlineButton(['text' => '❌ Отменить выполнение', 'callback_data' => "cancel_$dealId"]),
         ]);
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - travelStartYesHandle: Updating buttons for message " . $message->getMessageId() . "\n", FILE_APPEND);
+        
         $telegram->editMessageReplyMarkup([
                 'chat_id' => $chatId,
                 'message_id' => $message->getMessageId(),
                 'reply_markup' => $keyboard
         ]);
-        $telegram->answerCallbackQuery([
-                'callback_query_id' => $result->callbackQuery->id,
-                'text' => '', // можно добавить всплывающее уведомление
-                'show_alert' => false
-        ]);
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - travelStartYesHandle: Complete\n", FILE_APPEND);
     }
 
     public static function travelStartNoHandle(Api $telegram, Update $result, int $dealId) {
-        require_once(__DIR__ . '/crest/crest.php');
+        if (!class_exists("CRest")) { require_once(__DIR__ . "/crest/crest.php"); }
         $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
         if(empty($deal['ID'])) {
             $telegram->answerCallbackQuery([
@@ -789,8 +833,8 @@ class botManager {
             ]);
             exit;
         }
-        $message = $result->getMessage();
-        $chatId = $message->getChat()->getId();
+        $message = $result->get('message');
+        $chatId = $message['chat']['id'];
 
 
         $keyboard = [
@@ -818,6 +862,31 @@ class botManager {
     public static function travelStartHandle(int $dealId, Api $telegram, Update $result) {
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - travelStartHandle started for deal $dealId\n", FILE_APPEND);
         
+        // Проверяем заявку
+        if (!class_exists("CRest")) { require_once('/home/telegramBot/crest/crest.php'); }
+        $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
+        
+        // Проверяем, что заявка в правильной стадии
+        if ($deal['STAGE_ID'] != botManager::DRIVER_ACCEPTED_STAGE_ID) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Wrong stage for start button: " . $deal['STAGE_ID'] . " (expected: PREPAYMENT_INVOICE)\n", FILE_APPEND);
+            $telegram->answerCallbackQuery([
+                    'callback_query_id' => $result->callbackQuery->id,
+                    'text' => 'Сначала примите заявку!',
+                    'show_alert' => true
+            ]);
+            return;
+        }
+        
+        // СНАЧАЛА отвечаем на callback (быстро!)
+        $telegram->answerCallbackQuery([
+                'callback_query_id' => $result->callbackQuery->id,
+                'text' => 'Вы уверены? Нажмите Да для подтверждения.',
+                'show_alert' => false
+        ]);
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Callback answered\n", FILE_APPEND);
+        
+        // ПОТОМ обновляем кнопки
         $message = $result->getMessage();
         $chatId = $message->getChat()->getId();
         
@@ -830,20 +899,19 @@ class botManager {
             ]
         ];
         
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Editing message markup for message " . $message->getMessageId() . "\n", FILE_APPEND);
+        
         $telegram->editMessageReplyMarkup([
                 'chat_id' => $chatId,
                 'message_id' => $message->getMessageId(),
                 'reply_markup' => json_encode($keyboard)
         ]);
-        $telegram->answerCallbackQuery([
-                'callback_query_id' => $result->callbackQuery->id,
-                'text' => '', // можно добавить всплывающее уведомление
-                'show_alert' => false
-        ]);
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Buttons updated\n", FILE_APPEND);
     }
 
     public static function driverRejectHandle ($telegram, $result, int $dealId):void {
-        require_once(__DIR__ . '/crest/crest.php');
+        if (!class_exists("CRest")) { require_once(__DIR__ . "/crest/crest.php"); }
         
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - driverRejectHandle called for deal $dealId\n", FILE_APPEND);
         
@@ -868,8 +936,8 @@ class botManager {
             return;
         }
         
-        $message = $result->getMessage();
-        $chatId = $message->getChat()->getId();
+        $message = $result->get('message');
+        $chatId = $message['chat']['id'];
         
         // Отправляем сообщение об отказе
         $telegram->sendMessage([
@@ -932,7 +1000,7 @@ class botManager {
      * @param array|null $oldValues Старые значения полей из webhook (опционально)
      */
     public static function dealChangeHandle(int $dealId, Api $telegram, Update $result, ?array $oldValues = null): void {
-        require_once(__DIR__ . '/crest/crest.php');
+        if (!class_exists("CRest")) { require_once(__DIR__ . "/crest/crest.php"); }
 
         // Логирование начала обработки
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
@@ -1137,7 +1205,7 @@ class botManager {
     }
 
     public static function commonMailing(int $dealId, Api $telegram, Update $result): void {
-        require_once(__DIR__ . '/crest/crest.php');
+        if (!class_exists("CRest")) { require_once(__DIR__ . "/crest/crest.php"); }
         $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
         if(empty($deal['ID'])) {
             $telegram->answerCallbackQuery([
@@ -1325,7 +1393,7 @@ class botManager {
 
 
         $text = <<<HTML
-#️⃣ $header
+$header
 
 📆 {$dateText}
 
@@ -1365,9 +1433,16 @@ HTML;
         $toAddress = $deal[botManager::ADDRESS_TO_FIELD];
         $sumText = $deal[botManager::DRIVER_SUM_FIELD];
 
-        $header = "Заявка {$deal['ID']}";
+        // Используем TITLE как номер заявки (999999), а не ID сделки
+        $orderNumber = $deal['TITLE'] ?? $deal['ID'];
+        // Очищаем номер от лишнего текста (может быть "Заявка: 999999")
+        if (strpos($orderNumber, ':') !== false) {
+            $orderNumber = trim(explode(':', $orderNumber)[1]);
+        }
         
-        // Добавляем ФИО водителя в заголовок
+        $header = "#️⃣ $orderNumber";
+        
+        // Добавляем ФИО водителя в заголовок, если назначен
         if($driverName) {
             $header .= " - <b>Назначена водителю: {$driverName}</b>";
         }
@@ -1520,7 +1595,7 @@ HTML;
      * Отправляет напоминание водителю за 1 час до поездки
      */
     public static function sendTravelReminder(int $dealId, $telegram): bool {
-        require_once('/home/telegramBot/crest/crest.php');
+        if (!class_exists("CRest")) { require_once("/home/telegramBot/crest/crest.php"); }
         
         $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
         if (empty($deal['ID'])) {
@@ -1578,7 +1653,7 @@ HTML;
      * Обрабатывает подтверждение водителя о готовности к поездке
      */
     public static function confirmReminderHandle(int $dealId, $telegram, Update $result): void {
-        require_once('/home/telegramBot/crest/crest.php');
+        if (!class_exists("CRest")) { require_once("/home/telegramBot/crest/crest.php"); }
         
         $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
         if (empty($deal['ID'])) {
@@ -1617,7 +1692,7 @@ HTML;
      * Отправляет уведомление ответственному лицу о том, что водитель не подтвердил заказ
      */
     public static function sendResponsibleNotification(int $dealId, $telegram): bool {
-        require_once('/home/telegramBot/crest/crest.php');
+        if (!class_exists("CRest")) { require_once("/home/telegramBot/crest/crest.php"); }
         
         $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
         if (empty($deal['ID'])) {
@@ -1665,7 +1740,7 @@ HTML;
      * Проверяет все активные заявки и отправляет напоминания
      */
     public static function checkAndSendReminders($telegram): array {
-        require_once('/home/telegramBot/crest/crest.php');
+        if (!class_exists("CRest")) { require_once("/home/telegramBot/crest/crest.php"); }
         
         $result = [
             'reminders_sent' => 0,
