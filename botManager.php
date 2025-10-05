@@ -20,6 +20,7 @@ class botManager {
     public const ADDRESS_TO_FIELD               = 'UF_CRM_1751269175432';
     public const ADDRESS_TO_FIELD_SERVICE       = 'UF_CRM_1751638529';
     public const ADDITIONAL_CONDITIONS_FIELD    = 'UF_CRM_1751269256380';
+    public const INTERMEDIATE_POINTS_FIELD      = 'UF_CRM_1754228146'; // Промежуточные точки
     public const FLIGHT_NUMBER_FIELD            = 'UF_CRM_1751271774391'; // Номер рейса
     public const CAR_CLASS_FIELD                = 'UF_CRM_1751271728682'; // Класс автомобиля
     public const INTERMEDIATE_POINTS_FIELD      = 'UF_CRM_1751822573510'; // Промежуточные точки
