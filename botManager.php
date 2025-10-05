@@ -911,45 +911,67 @@ class botManager {
     }
 
     public static function driverRejectHandle ($telegram, $result, int $dealId):void {
-        if (!class_exists("CRest")) { require_once(__DIR__ . "/crest/crest.php"); }
+        if (!class_exists("CRest")) { require_once('/home/telegramBot/crest/crest.php'); }
         
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - driverRejectHandle called for deal $dealId\n", FILE_APPEND);
         
-        $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
-        if(empty($deal['ID'])) {
+        // СНАЧАЛА отвечаем на callback
+        try {
             $telegram->answerCallbackQuery([
                     'callback_query_id' => $result->callbackQuery->id,
-                    'text' => '', // можно добавить всплывающее уведомление
+                    'text' => 'Отказ принят',
                     'show_alert' => false
             ]);
-            exit;
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Callback answered\n", FILE_APPEND);
+        } catch (Exception $e) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error answering callback: " . $e->getMessage() . "\n", FILE_APPEND);
+        }
+        
+        $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
+        if(empty($deal['ID'])) {
+            return;
         }
         
         // ЗАЩИТА ОТ СПАМА: если водитель уже сброшен и стадия NEW - это повторный вызов
         if ($deal[botManager::DRIVER_ID_FIELD] == 0 && $deal['STAGE_ID'] == botManager::NEW_DEAL_STAGE_ID) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Reject ignored (already rejected, driver=0, stage=NEW)\n", FILE_APPEND);
-            $telegram->answerCallbackQuery([
-                    'callback_query_id' => $result->callbackQuery->id,
-                    'text' => 'Вы уже отказались от этой заявки',
-                    'show_alert' => false
-            ]);
             return;
         }
         
-        $message = $result->get('message');
-        $chatId = $message['chat']['id'];
+        $message = $result->getMessage();
+        $chatId = $message->getChat()->getId();
         
-        // Отправляем сообщение об отказе
-        $telegram->sendMessage([
-                'chat_id' => $chatId,
-                'text'    => "вы отказались!",
-        ]);
+        // Получаем имя водителя из CRM контакта
+        $driverName = 'Водитель';
         
-        // Удаляем сообщение с кнопками
-        $telegram->deleteMessage([
-                'chat_id'    => $chatId,
-                'message_id' => $message->getMessageId(),
-        ]);
+        if ($deal[botManager::DRIVER_ID_FIELD] > 0) {
+            $driverContact = \CRest::call('crm.contact.get', [
+                'id' => $deal[botManager::DRIVER_ID_FIELD],
+                'select' => ['NAME', 'LAST_NAME']
+            ])['result'];
+            
+            if ($driverContact) {
+                $driverName = trim($driverContact['NAME'] . ' ' . $driverContact['LAST_NAME']);
+            }
+        }
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Sending reject message to chat $chatId from $driverName\n", FILE_APPEND);
+        
+        // Отправляем сообщение об отказе в группу
+        try {
+            $orderNumber = $deal['TITLE'] ?? $dealId;
+            if (strpos($orderNumber, 'Заявка: ') === 0) {
+                $orderNumber = substr($orderNumber, 8);
+            }
+            
+            $telegram->sendMessage([
+                    'chat_id' => $chatId,
+                    'text'    => "❌ Водитель <b>$driverName</b> отказался от заявки #$orderNumber",
+                    'parse_mode' => 'HTML'
+            ]);
+        } catch (Exception $e) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error sending reject message: " . $e->getMessage() . "\n", FILE_APPEND);
+        }
         
         // Обновляем сделку - сбрасываем водителя и возвращаем стадию
         $dealUpdate = \CRest::call('crm.deal.update', [
@@ -962,13 +984,12 @@ class botManager {
         
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal $dealId rejected, stage reset to NEW\n", FILE_APPEND);
         
+        // Уведомляем ответственного
         if($deal[botManager::DRIVER_ID_FIELD] > 0) {
-        $notify = \CRest::call('im.notify.system.add', [
-                        'USER_ID' => $deal['ASSIGNED_BY_ID'],
-                        'MESSAGE'=>"Водитель отказался от заявки". " <a href = 'https://b24-cprnr5.bitrix24.ru/crm/deal/details/$dealId/'>{$deal['TITLE']}</a>",
-
-                ]
-        );
+            \CRest::call('im.notify.system.add', [
+                'USER_ID' => $deal['ASSIGNED_BY_ID'],
+                'MESSAGE'=>"Водитель отказался от заявки #$orderNumber. <a href='https://meetride.bitrix24.ru/crm/deal/details/$dealId/'>Открыть заявку</a>"
+            ]);
         }
         // УБРАЛИ рассылку всем водителям в личку - по новой логике заявка остается в общем чате
         // Водители могут взять заявку из общего чата, нажав кнопку "Принять"
