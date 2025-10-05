@@ -691,20 +691,36 @@ class botManager {
     }
 
     public static function cancelYesHandle(Api $telegram, Update $result, int $dealId) {
-        if (!class_exists("CRest")) { require_once(__DIR__ . "/crest/crest.php"); }
-        $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
-        if(empty($deal['ID'])) {
+        if (!class_exists("CRest")) { require_once('/home/telegramBot/crest/crest.php'); }
+        
+        // СНАЧАЛА отвечаем на callback
+        try {
             $telegram->answerCallbackQuery([
                     'callback_query_id' => $result->callbackQuery->id,
-                    'text' => '', // можно добавить всплывающее уведомление
+                    'text' => 'Выполнение отменено!',
                     'show_alert' => false
             ]);
-            exit;
+        } catch (Exception $e) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error answering callback: " . $e->getMessage() . "\n", FILE_APPEND);
         }
-        $message = $result->get('message');
-        $chatId = $message['chat']['id'];
+        
+        $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
+        if(empty($deal['ID'])) {
+            return;
+        }
+        
+        $message = $result->getMessage();
+        $chatId = $message->getChat()->getId();
 
+        // Меняем стадию обратно на PREPAYMENT_INVOICE
+        $dealUpdate = \CRest::call('crm.deal.update', ['id' => $dealId, 'fields'=>[
+                'STAGE_ID'=>botManager::DRIVER_ACCEPTED_STAGE_ID,
+        ]
+        ]);
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Stage reverted to PREPAYMENT_INVOICE\n", FILE_APPEND);
 
+        // Возвращаем кнопки "Начать выполнение"
         $keyboard = [
             'inline_keyboard' => [
                 [
@@ -719,22 +735,14 @@ class botManager {
                 'message_id' => $message->getMessageId(),
                 'reply_markup' => json_encode($keyboard)
         ]);
-        $dealUpdate = \CRest::call('crm.deal.update', ['id' => $dealId, 'fields'=>[
-                'STAGE_ID'=>botManager::DRIVER_ACCEPTED_STAGE_ID,
-        ]
-        ]);
+        
+        // Уведомляем ответственного
         $notify = \CRest::call('im.notify.system.add', [
                 'USER_ID' => $deal['ASSIGNED_BY_ID'],
-                'MESSAGE'=>"Водитель отменил выполнение заявки". " <a href = 'https://b24-cprnr5.bitrix24.ru/crm/deal/details/$dealId/'>{$deal['TITLE']}</a>",
-
-                ]
-        );
-        $telegram->answerCallbackQuery([
-                'callback_query_id' => $result->callbackQuery->id,
-                'text' => '', // можно добавить всплывающее уведомление
-                'show_alert' => false
+                'MESSAGE'=>"Водитель отменил выполнение заявки " . ($deal['TITLE'] ?? "#$dealId") . ". <a href='https://meetride.bitrix24.ru/crm/deal/details/$dealId/'>Открыть заявку</a>"
         ]);
-
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - cancelYesHandle completed\n", FILE_APPEND);
     }
 
     public static function cancelNoHandle(int $dealId, Api $telegram, Update $result) {
