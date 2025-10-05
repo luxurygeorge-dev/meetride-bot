@@ -32,3 +32,8 @@ foreach ($deals as $deal) {
 echo "\n=== ПОИСК ЗАВЕРШЕН ===\n";
 ?>
 
+
+
+
+
+

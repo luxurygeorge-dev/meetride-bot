@@ -29,7 +29,7 @@ class botManager {
     public const ADDITIONAL_CONDITIONS_FIELD_SERVICE = 'UF_CRM_1758709126'; // REMINDER_SENT_FIELD (используем как SERVICE)
     public const PASSENGERS_FIELD_SERVICE = 'UF_CRM_1758709139'; // REMINDER_CONFIRMED_FIELD (используем как SERVICE)
     public const FLIGHT_NUMBER_FIELD_SERVICE = 'UF_CRM_1758710216'; // REMINDER_NOTIFICATION_SENT_FIELD (используем как SERVICE)
-    public const CAR_CLASS_FIELD_SERVICE = 'UF_CRM_1751271841129'; // HIDDEN_FIELD (используем как SERVICE)
+    public const CAR_CLASS_FIELD_SERVICE = 'UF_CRM_1754228146'; // Промежуточные точки (служ.) - используем для SERVICE копии класса авто
     public const DRIVER_ACCEPTED_STAGE_ID       = 'PREPAYMENT_INVOICE'; // Водитель взял заявку
     public const NEW_DEAL_STAGE_ID              = 'NEW';
     public const DRIVER_CHOICE_STAGE_ID         = 'PREPARATION';
@@ -515,7 +515,10 @@ class botManager {
                     botManager::DRIVER_SUM_FIELD_SERVICE=>$deal[botManager::DRIVER_SUM_FIELD],
                     botManager::ADDRESS_FROM_FIELD_SERVICE=>$deal[botManager::ADDRESS_FROM_FIELD],
                     botManager::ADDRESS_TO_FIELD_SERVICE=>$deal[botManager::ADDRESS_TO_FIELD],
-                    botManager::TRAVEL_DATE_TIME_FIELD_SERVICE=>$deal[botManager::TRAVEL_DATE_TIME_FIELD]
+                    botManager::TRAVEL_DATE_TIME_FIELD_SERVICE=>$deal[botManager::TRAVEL_DATE_TIME_FIELD],
+                    botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE=>$deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
+                    botManager::PASSENGERS_FIELD_SERVICE=>$deal['UF_CRM_1751271798896'],
+                    botManager::FLIGHT_NUMBER_FIELD_SERVICE=>$deal[botManager::FLIGHT_NUMBER_FIELD]
                 ]]);
                 
                 file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal stage updated\n", FILE_APPEND);
@@ -839,6 +842,9 @@ class botManager {
 
     public static function driverRejectHandle ($telegram, $result, int $dealId):void {
         require_once(__DIR__ . '/crest/crest.php');
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - driverRejectHandle called for deal $dealId\n", FILE_APPEND);
+        
         $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
         if(empty($deal['ID'])) {
             $telegram->answerCallbackQuery([
@@ -848,16 +854,34 @@ class botManager {
             ]);
             exit;
         }
+        
+        // ЗАЩИТА ОТ СПАМА: если водитель уже сброшен и стадия NEW - это повторный вызов
+        if ($deal[botManager::DRIVER_ID_FIELD] == 0 && $deal['STAGE_ID'] == botManager::NEW_DEAL_STAGE_ID) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Reject ignored (already rejected, driver=0, stage=NEW)\n", FILE_APPEND);
+            $telegram->answerCallbackQuery([
+                    'callback_query_id' => $result->callbackQuery->id,
+                    'text' => 'Вы уже отказались от этой заявки',
+                    'show_alert' => false
+            ]);
+            return;
+        }
+        
         $message = $result->getMessage();
         $chatId = $message->getChat()->getId();
+        
+        // Отправляем сообщение об отказе
         $telegram->sendMessage([
                 'chat_id' => $chatId,
                 'text'    => "вы отказались!",
         ]);
+        
+        // Удаляем сообщение с кнопками
         $telegram->deleteMessage([
                 'chat_id'    => $chatId,
                 'message_id' => $message->getMessageId(),
         ]);
+        
+        // Обновляем сделку - сбрасываем водителя и возвращаем стадию
         $dealUpdate = \CRest::call('crm.deal.update', [
                 'id' => $dealId,
                 'fields'=>[
@@ -865,6 +889,9 @@ class botManager {
                     'STAGE_ID' => botManager::NEW_DEAL_STAGE_ID  // Возвращаем на стадию "Новая заявка"
                 ]
         ]);
+        
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal $dealId rejected, stage reset to NEW\n", FILE_APPEND);
+        
         if($deal[botManager::DRIVER_ID_FIELD] > 0) {
         $notify = \CRest::call('im.notify.system.add', [
                         'USER_ID' => $deal['ASSIGNED_BY_ID'],
@@ -990,12 +1017,7 @@ class botManager {
             $changes['flightNumber'] = (string) $mainFlightNumber;
         }
         
-        // Класс автомобиля
-        $mainCarClass = $deal[botManager::CAR_CLASS_FIELD];
-        $serviceCarClass = $deal[botManager::CAR_CLASS_FIELD_SERVICE];
-        if ($mainCarClass !== $serviceCarClass && $isValidServiceValue($serviceCarClass, $mainCarClass)) {
-            $changes['carClass'] = (string) $mainCarClass;
-        }
+        // Класс автомобиля - НЕ ОТСЛЕЖИВАЕМ (не меняется после создания заявки)
         
         // Если нет изменений - выходим
         if (empty($changes)) {
@@ -1018,7 +1040,6 @@ class botManager {
                 botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE=>$deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
                 botManager::PASSENGERS_FIELD_SERVICE=>$deal['UF_CRM_1751271798896'],
                 botManager::FLIGHT_NUMBER_FIELD_SERVICE=>$deal[botManager::FLIGHT_NUMBER_FIELD],
-                botManager::CAR_CLASS_FIELD_SERVICE=>$deal[botManager::CAR_CLASS_FIELD],
                 'UF_CRM_1751638512' => date('Y-m-d H:i:s') // Обновляем временную метку
         ]
         ]);
@@ -1054,7 +1075,10 @@ class botManager {
 
     public static function groupAcceptHandle(int $dealId, string $chatId, Api $telegram, Update $result, $driverId): void {
         $message = $result->getMessage();
-        $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
+        $deal = \CRest::call('crm.deal.get', [
+            'id' => $dealId,
+            'select' => ['*', 'UF_CRM_1751271798896', botManager::FLIGHT_NUMBER_FIELD] // Получаем все поля включая пассажиры и номер рейса
+        ])['result'];
         if(empty($deal['ID'])) {
             $telegram->answerCallbackQuery([
                     'callback_query_id' => $result->callbackQuery->id,
@@ -1064,7 +1088,17 @@ class botManager {
             exit;
         }
         if(!$deal[botManager::DRIVER_ID_FIELD] && $deal['STAGE_ID'] === botManager::DRIVER_CHOICE_STAGE_ID) {
-            \CRest::call('crm.deal.update', ['id' => $dealId, 'fields'=>[botManager::DRIVER_ID_FIELD => $driverId, 'STAGE_ID'=>botManager::DRIVER_ACCEPTED_STAGE_ID]])['result'];
+            \CRest::call('crm.deal.update', ['id' => $dealId, 'fields'=>[
+                botManager::DRIVER_ID_FIELD => $driverId,
+                'STAGE_ID'=>botManager::DRIVER_ACCEPTED_STAGE_ID,
+                botManager::DRIVER_SUM_FIELD_SERVICE=>$deal[botManager::DRIVER_SUM_FIELD],
+                botManager::ADDRESS_FROM_FIELD_SERVICE=>$deal[botManager::ADDRESS_FROM_FIELD],
+                botManager::ADDRESS_TO_FIELD_SERVICE=>$deal[botManager::ADDRESS_TO_FIELD],
+                botManager::TRAVEL_DATE_TIME_FIELD_SERVICE=>$deal[botManager::TRAVEL_DATE_TIME_FIELD],
+                botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE=>$deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
+                botManager::PASSENGERS_FIELD_SERVICE=>$deal['UF_CRM_1751271798896'],
+                botManager::FLIGHT_NUMBER_FIELD_SERVICE=>$deal[botManager::FLIGHT_NUMBER_FIELD]
+            ]])['result'];
         }
         sleep(3);
         $deal = \CRest::call('crm.deal.get', [

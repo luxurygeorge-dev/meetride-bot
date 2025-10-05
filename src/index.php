@@ -76,98 +76,9 @@ try {
         } elseif ($deal && $deal['STAGE_ID'] == 'PREPAYMENT_INVOICE') {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal $dealId is PREPAYMENT_INVOICE\n", FILE_APPEND);
             
-            // Проверяем, назначен ли водитель
-            $driverId = $deal['UF_CRM_1751272181'] ?? null;
-            if ($driverId && $driverId > 0) {
-                // Проверяем, не было ли уже отправлено сообщение (защита от дублирования)
-                // Используем поле SERVICE для отслеживания
-                $lastNotificationTime = $deal['UF_CRM_1751638512'] ?? null; // ADDRESS_FROM_FIELD_SERVICE
-                $currentTime = date('Y-m-d H:i:s');
-                
-                // Если последнее уведомление было отправлено менее 5 минут назад - пропускаем
-                if ($lastNotificationTime) {
-                    $lastTime = strtotime($lastNotificationTime);
-                    $currentTimestamp = strtotime($currentTime);
-                    if (($currentTimestamp - $lastTime) < 300) { // 300 секунд = 5 минут
-                        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Skipping duplicate notification for deal $dealId (last sent: $lastNotificationTime)\n", FILE_APPEND);
-                        echo "Skipping duplicate notification for deal $dealId\n";
-                        $skipNotification = true;
-                    } else {
-                        $skipNotification = false;
-                    }
-                } else {
-                    $skipNotification = false;
-                }
-                
-                if (!$skipNotification) {
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Driver assigned (ID: $driverId) for deal $dealId\n", FILE_APPEND);
-                
-                // Получаем данные водителя
-                $driver = \CRest::call('crm.contact.get', [
-                    'id' => $driverId,
-                    'select' => ['ID', 'NAME', 'LAST_NAME', 'UF_CRM_1751185017761']
-                ])['result'];
-                
-                if ($driver && !empty($driver['UF_CRM_1751185017761'])) {
-                    $driverTelegramId = (int) $driver['UF_CRM_1751185017761'];
-                    $driverName = trim($driver['NAME'] . ' ' . $driver['LAST_NAME']);
-                    
-                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Sending message to driver $driverName (Telegram ID: $driverTelegramId)\n", FILE_APPEND);
-                    
-                    // Получаем полные данные заявки с пассажирами и номером рейса
-                    $dealFull = \CRest::call('crm.deal.get', [
-                        'id' => $dealId,
-                        'select' => ['*', 'UF_CRM_1751271798896', botManager::FLIGHT_NUMBER_FIELD]
-                    ])['result'];
-                    
-                    // Формируем сообщение для водителя
-                    $messageText = botManager::orderTextForDriver($dealFull);
-                    
-                    // Создаем клавиатуру
-                    $keyboard = [
-                        'inline_keyboard' => [
-                            [
-                                ['text' => '✅ Начать выполнение', 'callback_data' => "start_$dealId"],
-                                ['text' => '❌ Отказаться', 'callback_data' => "reject_$dealId"]
-                            ]
-                        ]
-                    ];
-                    
-                    // Отправляем сообщение водителю
-                    try {
-                        $result = $telegram->sendMessage([
-                            'chat_id' => $driverTelegramId,
-                            'text' => $messageText,
-                            'reply_markup' => json_encode($keyboard),
-                            'parse_mode' => 'HTML'
-                        ]);
-                        
-                        if ($result && $result->isOk()) {
-                            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Message sent successfully to driver for deal $dealId\n", FILE_APPEND);
-                            echo "Message sent to driver for deal $dealId\n";
-                            
-                            // Отмечаем время отправки уведомления для защиты от дублирования
-                            \CRest::call('crm.deal.update', [
-                                'id' => $dealId,
-                                'fields' => ['UF_CRM_1751638512' => $currentTime] // ADDRESS_FROM_FIELD_SERVICE
-                            ]);
-                        } else {
-                            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Failed to send message to driver for deal $dealId\n", FILE_APPEND);
-                            echo "Failed to send message to driver for deal $dealId\n";
-                        }
-                    } catch (Exception $e) {
-                        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error sending message to driver: " . $e->getMessage() . "\n", FILE_APPEND);
-                        echo "Error sending message to driver: " . $e->getMessage() . "\n";
-                    }
-                }
-                } else {
-                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Driver not found or no Telegram ID for deal $dealId\n", FILE_APPEND);
-                    echo "Driver not found or no Telegram ID for deal $dealId\n";
-                }
-            } else {
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - No driver assigned for deal $dealId\n", FILE_APPEND);
-                echo "No driver assigned for deal $dealId\n";
-            }
+            // ЭТОТ БЛОК КОДА ОТКЛЮЧЕН - уведомление водителю отправляется из botManager::driverAcceptHandle()
+            // Здесь не нужно дублировать отправку, это вызывает спам
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Skipping notification (handled by driverAcceptHandle)\n", FILE_APPEND);
             
             // Также проверяем изменения в полях (как было раньше)
             echo "Deal $dealId stage is: " . $deal['STAGE_ID'] . " - checking for field changes\n";
@@ -198,10 +109,14 @@ try {
     }
     
     // Старая логика для прямых вызовов с dealId и stage
-    if (!empty($_REQUEST['dealId']) && !empty($_REQUEST['stage']) && $_REQUEST['stage'] == 'Назначение водителя') {
+    if (!empty($_REQUEST['dealId']) && !empty($_REQUEST['stage'])) {
         
         $dealId = (int) $_REQUEST['dealId'];
-        echo "Processing deal: $dealId\n";
+        $stage = $_REQUEST['stage'];
+        echo "Processing deal: $dealId, stage: $stage\n";
+        
+        $log_message = date('Y-m-d H:i:s') . " - Webhook call: dealId=$dealId, stage=$stage\n";
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
         
         // Инициализируем Telegram
         $telegram = new Api('7529690360:AAHED5aKmuKjjfFQPRI-0RQ8DlxlZARA2O4');
