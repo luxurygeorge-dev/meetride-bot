@@ -219,3 +219,4 @@ tail -f /var/www/html/meetRiedeBot/logs/webhook_debug.log
 
 **Без SERVICE полей промежуточные точки и пассажиры отслеживаться НЕ БУДУТ!**
 
+

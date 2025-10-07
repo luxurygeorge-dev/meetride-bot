@@ -195,3 +195,4 @@ public static function dealChangeHandle(int $dealId, Api $telegram, Update $resu
     }
 }
 
+

@@ -86,9 +86,29 @@ try {
         } elseif ($deal && $deal['STAGE_ID'] == 'PREPAYMENT_INVOICE') {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal $dealId is PREPAYMENT_INVOICE\n", FILE_APPEND);
             
-            // ЭТОТ БЛОК КОДА ОТКЛЮЧЕН - уведомление водителю отправляется из botManager::driverAcceptHandle()
-            // Здесь не нужно дублировать отправку, это вызывает спам
-            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Skipping notification (handled by driverAcceptHandle)\n", FILE_APPEND);
+            // Проверяем, есть ли назначенный водитель с Telegram ID
+            if (!empty($deal[botManager::DRIVER_ID_FIELD]) && $deal[botManager::DRIVER_ID_FIELD] > 0) {
+                $driver = \CRest::call('crm.contact.get', [
+                    'id' => $deal[botManager::DRIVER_ID_FIELD],
+                    'select' => ['ID', botManager::DRIVER_TELEGRAM_ID_FIELD]
+                ])['result'];
+                
+                if (!empty($driver['ID']) && !empty($driver[botManager::DRIVER_TELEGRAM_ID_FIELD])) {
+                    $driverTelegramId = (int) $driver[botManager::DRIVER_TELEGRAM_ID_FIELD];
+                    
+                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
+                        date('Y-m-d H:i:s') . " - Sending private message to driver $driverTelegramId for deal $dealId\n", FILE_APPEND);
+                    
+                    // Отправляем сообщение в личку водителю с кнопками "Начать выполнение"
+                    botManager::sendPrivateMessageToDriver($dealId, $driverTelegramId, $telegram);
+                } else {
+                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
+                        date('Y-m-d H:i:s') . " - Driver has no Telegram ID for deal $dealId\n", FILE_APPEND);
+                }
+            } else {
+                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
+                    date('Y-m-d H:i:s') . " - No driver assigned for deal $dealId\n", FILE_APPEND);
+            }
             
             // Также проверяем изменения в полях (как было раньше)
             echo "Deal $dealId stage is: " . $deal['STAGE_ID'] . " - checking for field changes\n";
@@ -105,6 +125,31 @@ try {
 
         } elseif ($deal && $deal['STAGE_ID'] == 'EXECUTING') {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal $dealId is EXECUTING\n", FILE_APPEND);
+            
+            // Проверяем, есть ли назначенный водитель с Telegram ID
+            if (!empty($deal[botManager::DRIVER_ID_FIELD]) && $deal[botManager::DRIVER_ID_FIELD] > 0) {
+                $driver = \CRest::call('crm.contact.get', [
+                    'id' => $deal[botManager::DRIVER_ID_FIELD],
+                    'select' => ['ID', botManager::DRIVER_TELEGRAM_ID_FIELD]
+                ])['result'];
+                
+                if (!empty($driver['ID']) && !empty($driver[botManager::DRIVER_TELEGRAM_ID_FIELD])) {
+                    $driverTelegramId = (int) $driver[botManager::DRIVER_TELEGRAM_ID_FIELD];
+                    
+                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
+                        date('Y-m-d H:i:s') . " - Sending private message to driver $driverTelegramId for deal $dealId (EXECUTING)\n", FILE_APPEND);
+                    
+                    // Отправляем сообщение в личку водителю с кнопками "Начать выполнение"
+                    botManager::sendPrivateMessageToDriver($dealId, $driverTelegramId, $telegram);
+                } else {
+                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
+                        date('Y-m-d H:i:s') . " - Driver has no Telegram ID for deal $dealId (EXECUTING)\n", FILE_APPEND);
+                }
+            } else {
+                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
+                    date('Y-m-d H:i:s') . " - No driver assigned for deal $dealId (EXECUTING)\n", FILE_APPEND);
+            }
+            
             // Проверяем изменения в полях для стадии "Заявка выполняется"
             echo "Deal $dealId stage is: " . $deal['STAGE_ID'] . " - checking for field changes\n";
             $log_message = date('Y-m-d H:i:s') . " - Checking for field changes in deal $dealId (stage: " . $deal['STAGE_ID'] . ")\n";

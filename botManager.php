@@ -32,7 +32,24 @@ class botManager {
     public const PASSENGERS_FIELD_SERVICE = 'UF_CRM_1759653762'; // SERVICE: Пассажиры
     public const INTERMEDIATE_POINTS_FIELD_SERVICE = 'UF_CRM_1754228146'; // SERVICE: Промежуточные точки
     public const FLIGHT_NUMBER_FIELD_SERVICE = 'UF_CRM_1758710216'; // REMINDER_NOTIFICATION_SENT_FIELD (используем как SERVICE)
+    public const ORDER_NUMBER_SERVICE_FIELD = 'UF_CRM_1759847340'; // SERVICE: Номер заявки
     public const DRIVER_ACCEPTED_STAGE_ID       = 'PREPAYMENT_INVOICE'; // Водитель взял заявку
+    
+    /**
+     * Извлекает очищенный номер заявки из TITLE
+     */
+    public static function extractOrderNumber(string $title): string {
+        if (empty($title)) return '';
+        
+        $cleanNumber = $title;
+        if (strpos($cleanNumber, 'Заявка: ') === 0) {
+            $cleanNumber = mb_substr($cleanNumber, 8);
+        } elseif (strpos($cleanNumber, 'Сделка #') === 0) {
+            $cleanNumber = mb_substr($cleanNumber, 8);
+        }
+        
+        return $cleanNumber;
+    }
     public const NEW_DEAL_STAGE_ID              = 'NEW';
     public const DRIVER_CHOICE_STAGE_ID         = 'PREPARATION';
     public const TRAVEL_STARTED_STAGE_ID         = 'EXECUTING'; // Заявка выполняется
@@ -239,7 +256,9 @@ class botManager {
                         botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE => $deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
                         botManager::PASSENGERS_FIELD_SERVICE => $deal['UF_CRM_1751271798896'],
                         botManager::FLIGHT_NUMBER_FIELD_SERVICE => $deal[botManager::FLIGHT_NUMBER_FIELD],
-                        botManager::CAR_CLASS_FIELD_SERVICE => $deal[botManager::CAR_CLASS_FIELD]
+                        botManager::CAR_CLASS_FIELD_SERVICE => $deal[botManager::CAR_CLASS_FIELD],
+                        // Инициализируем служебное поле номера заявки
+                        botManager::ORDER_NUMBER_SERVICE_FIELD => self::extractOrderNumber($deal['TITLE'] ?? '')
                     ]
                 ]);
                 
@@ -311,7 +330,9 @@ class botManager {
                         botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE => $deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
                         botManager::PASSENGERS_FIELD_SERVICE => $deal['UF_CRM_1751271798896'],
                         botManager::FLIGHT_NUMBER_FIELD_SERVICE => $deal[botManager::FLIGHT_NUMBER_FIELD],
-                        botManager::CAR_CLASS_FIELD_SERVICE => $deal[botManager::CAR_CLASS_FIELD]
+                        botManager::CAR_CLASS_FIELD_SERVICE => $deal[botManager::CAR_CLASS_FIELD],
+                        // Инициализируем служебное поле номера заявки
+                        botManager::ORDER_NUMBER_SERVICE_FIELD => self::extractOrderNumber($deal['TITLE'] ?? '')
                     ]
                 ]);
                 
@@ -380,7 +401,9 @@ class botManager {
                             botManager::DRIVER_SUM_FIELD_SERVICE => $deal[botManager::DRIVER_SUM_FIELD],
                             botManager::ADDRESS_FROM_FIELD_SERVICE => $deal[botManager::ADDRESS_FROM_FIELD],
                             botManager::ADDRESS_TO_FIELD_SERVICE => $deal[botManager::ADDRESS_TO_FIELD],
-                            botManager::TRAVEL_DATE_TIME_FIELD_SERVICE => $deal[botManager::TRAVEL_DATE_TIME_FIELD]
+                            botManager::TRAVEL_DATE_TIME_FIELD_SERVICE => $deal[botManager::TRAVEL_DATE_TIME_FIELD],
+                            // Инициализируем служебное поле номера заявки
+                            botManager::ORDER_NUMBER_SERVICE_FIELD => self::extractOrderNumber($deal['TITLE'] ?? '')
                         ]
                     ]);
                     
@@ -500,7 +523,9 @@ class botManager {
                 botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE => $deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
                 botManager::PASSENGERS_FIELD_SERVICE => $deal['UF_CRM_1751271798896'],
                 botManager::FLIGHT_NUMBER_FIELD_SERVICE => $deal[botManager::FLIGHT_NUMBER_FIELD],
-                botManager::CAR_CLASS_FIELD_SERVICE => $deal[botManager::CAR_CLASS_FIELD]
+                botManager::CAR_CLASS_FIELD_SERVICE => $deal[botManager::CAR_CLASS_FIELD],
+                // Инициализируем служебное поле номера заявки
+                botManager::ORDER_NUMBER_SERVICE_FIELD => self::extractOrderNumber($deal['TITLE'] ?? '')
             ]
         ]);
         
@@ -966,13 +991,16 @@ class botManager {
         
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Sending reject message to chat $chatId from $driverName\n", FILE_APPEND);
         
+        // Получаем номер заявки из TITLE
+        $orderNumber = $deal['TITLE'] ?? $dealId;
+        if (strpos($orderNumber, 'Заявка: ') === 0) {
+            $orderNumber = substr($orderNumber, 8);
+        } elseif (strpos($orderNumber, 'Сделка #') === 0) {
+            $orderNumber = substr($orderNumber, 8);
+        }
+        
         // Отправляем сообщение об отказе в группу
         try {
-            $orderNumber = $deal['TITLE'] ?? $dealId;
-            if (strpos($orderNumber, 'Заявка: ') === 0) {
-                $orderNumber = substr($orderNumber, 8);
-            }
-            
             $telegram->sendMessage([
                     'chat_id' => $chatId,
                     'text'    => "❌ Водитель <b>$driverName</b> отказался от заявки #$orderNumber",
@@ -983,11 +1011,36 @@ class botManager {
         }
         
         // Обновляем сделку - сбрасываем водителя и возвращаем стадию
+        // ВАЖНО: Сохраняем оригинальный номер заявки (не меняем TITLE на ID!)
+        // Получаем текущий TITLE и сохраняем его в служебное поле, если оно пустое
+        $currentTitle = $deal['TITLE'] ?? '';
+        $serviceOrderNumber = $deal[botManager::ORDER_NUMBER_SERVICE_FIELD] ?? '';
+        
+        // Если служебное поле пустое, сохраняем очищенный номер из TITLE
+        if (empty($serviceOrderNumber) && !empty($currentTitle)) {
+            $cleanOrderNumber = $currentTitle;
+            if (strpos($cleanOrderNumber, 'Заявка: ') === 0) {
+                $cleanOrderNumber = substr($cleanOrderNumber, 8);
+            } elseif (strpos($cleanOrderNumber, 'Сделка #') === 0) {
+                $cleanOrderNumber = substr($cleanOrderNumber, 8);
+            }
+            $serviceOrderNumber = $cleanOrderNumber;
+        }
+        
+        // Если TITLE не соответствует формату "Заявка: номер", восстанавливаем из служебного поля
+        $finalTitle = $currentTitle;
+        if (!empty($serviceOrderNumber) && 
+            (strpos($currentTitle, 'Заявка: ') !== 0 && strpos($currentTitle, 'Сделка #') !== 0)) {
+            $finalTitle = 'Заявка: ' . $serviceOrderNumber;
+        }
+        
         $dealUpdate = \CRest::call('crm.deal.update', [
                 'id' => $dealId,
                 'fields'=>[
                     botManager::DRIVER_ID_FIELD => 0,
-                    'STAGE_ID' => botManager::NEW_DEAL_STAGE_ID  // Возвращаем на стадию "Новая заявка"
+                    'STAGE_ID' => botManager::NEW_DEAL_STAGE_ID,  // Возвращаем на стадию "Новая заявка"
+                    'TITLE' => $finalTitle,  // Восстанавливаем правильный номер заявки
+                    botManager::ORDER_NUMBER_SERVICE_FIELD => $serviceOrderNumber  // Сохраняем в служебное поле
                 ]
         ]);
         
@@ -1275,6 +1328,116 @@ class botManager {
             ]);
     }
 
+    /**
+     * Отправляет сообщение в личку водителю с кнопками "Начать выполнение" при ручном переводе на 3-ю стадию
+     */
+    public static function sendPrivateMessageToDriver(int $dealId, int $driverTelegramId, Api $telegram): void {
+        if (!class_exists("CRest")) { require_once("/home/telegramBot/crest/crest.php"); }
+
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
+            date('Y-m-d H:i:s') . " - sendPrivateMessageToDriver started for deal $dealId to driver $driverTelegramId\n", FILE_APPEND);
+
+        // Получаем данные о сделке
+        $deal = \CRest::call('crm.deal.get', [
+            'id' => $dealId,
+            'select' => [
+                '*',
+                botManager::PASSENGERS_FIELD, // Пассажиры
+                botManager::INTERMEDIATE_POINTS_FIELD, // Промежуточные точки
+                botManager::FLIGHT_NUMBER_FIELD // Номер рейса
+            ]
+        ])['result'];
+
+        if (empty($deal['ID'])) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
+                date('Y-m-d H:i:s') . " - Deal $dealId not found\n", FILE_APPEND);
+            return;
+        }
+
+        // Получаем имя водителя
+        $driver = \CRest::call('crm.contact.get', [
+            'id' => $deal[botManager::DRIVER_ID_FIELD],
+            'select' => ['NAME', 'LAST_NAME']
+        ])['result'];
+
+        $driverName = 'Водитель';
+        if ($driver) {
+            $driverName = trim($driver['NAME'] . ' ' . $driver['LAST_NAME']);
+        }
+
+        // Формируем сообщение
+        $orderNumber = $deal['TITLE'] ?? $dealId;
+        if (strpos($orderNumber, 'Заявка: ') === 0) {
+            $orderNumber = substr($orderNumber, 8);
+        } elseif (strpos($orderNumber, 'Сделка #') === 0) {
+            $orderNumber = substr($orderNumber, 8);
+        }
+
+        $message = "🚗 <b>Заявка #$orderNumber</b>\n\n";
+        $message .= "👋 Здравствуйте, $driverName!\n\n";
+        $message .= "🅰️ <b>Откуда:</b> " . ($deal[botManager::ADDRESS_FROM_FIELD] ?? 'Не указано') . "\n";
+        $message .= "🅱️ <b>Куда:</b> " . ($deal[botManager::ADDRESS_TO_FIELD] ?? 'Не указано') . "\n";
+        $message .= "⏰ <b>Время:</b> " . ($deal[botManager::TRAVEL_DATE_TIME_FIELD] ?? 'Не указано') . "\n";
+        
+        if (!empty($deal[botManager::INTERMEDIATE_POINTS_FIELD])) {
+            $intermediatePoints = $deal[botManager::INTERMEDIATE_POINTS_FIELD];
+            if (is_array($intermediatePoints)) {
+                $intermediatePoints = implode(", ", $intermediatePoints);
+            }
+            $message .= "🗺️ <b>Промежуточные точки:</b> $intermediatePoints\n";
+        }
+        
+        if (!empty($deal[botManager::PASSENGERS_FIELD])) {
+            $passengers = $deal[botManager::PASSENGERS_FIELD];
+            if (is_array($passengers)) {
+                $passengers = implode(", ", $passengers);
+            }
+            $message .= "👥 <b>Пассажиры:</b> $passengers\n";
+        }
+        
+        if (!empty($deal[botManager::FLIGHT_NUMBER_FIELD])) {
+            $message .= "✈️ <b>Номер рейса:</b> " . $deal[botManager::FLIGHT_NUMBER_FIELD] . "\n";
+        }
+        
+        if (!empty($deal[botManager::ADDITIONAL_CONDITIONS_FIELD])) {
+            $message .= "📝 <b>Дополнительные условия:</b> " . $deal[botManager::ADDITIONAL_CONDITIONS_FIELD] . "\n";
+        }
+        
+        $message .= "\n💰 <b>Сумма:</b> " . ($deal[botManager::DRIVER_SUM_FIELD] ?? 'Не указана') . " руб.\n\n";
+        $message .= "Пожалуйста, подтвердите готовность к выполнению заявки:";
+
+        // Создаем клавиатуру с кнопками
+        $keyboard = new \Telegram\Bot\Keyboard\Keyboard();
+        $keyboard->inlineKeyboard([
+            [
+                $keyboard->inlineButton([
+                    'text' => '✅ Начать выполнение',
+                    'callback_data' => "start_$dealId"
+                ]),
+                $keyboard->inlineButton([
+                    'text' => '❌ Отказаться',
+                    'callback_data' => "reject_$dealId"
+                ])
+            ]
+        ]);
+
+        try {
+            $telegram->sendMessage([
+                'chat_id' => $driverTelegramId,
+                'text' => $message,
+                'parse_mode' => 'HTML',
+                'reply_markup' => $keyboard
+            ]);
+
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
+                date('Y-m-d H:i:s') . " - Private message sent successfully to driver $driverTelegramId for deal $dealId\n", FILE_APPEND);
+
+        } catch (Exception $e) {
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
+                date('Y-m-d H:i:s') . " - Error sending private message to driver $driverTelegramId for deal $dealId: " . $e->getMessage() . "\n", FILE_APPEND);
+        }
+    }
+
     public static function groupAcceptHandle(int $dealId, string $chatId, Api $telegram, Update $result, $driverId): void {
         $message = $result->getMessage();
         $deal = \CRest::call('crm.deal.get', [
@@ -1299,7 +1462,9 @@ class botManager {
                 botManager::TRAVEL_DATE_TIME_FIELD_SERVICE=>$deal[botManager::TRAVEL_DATE_TIME_FIELD],
                 botManager::ADDITIONAL_CONDITIONS_FIELD_SERVICE=>$deal[botManager::ADDITIONAL_CONDITIONS_FIELD],
                 botManager::PASSENGERS_FIELD_SERVICE=>$deal['UF_CRM_1751271798896'],
-                botManager::FLIGHT_NUMBER_FIELD_SERVICE=>$deal[botManager::FLIGHT_NUMBER_FIELD]
+                botManager::FLIGHT_NUMBER_FIELD_SERVICE=>$deal[botManager::FLIGHT_NUMBER_FIELD],
+                // Инициализируем служебное поле номера заявки
+                botManager::ORDER_NUMBER_SERVICE_FIELD => self::extractOrderNumber($deal['TITLE'] ?? '')
             ]])['result'];
         }
         sleep(3);
