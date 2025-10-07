@@ -1417,6 +1417,14 @@ class botManager {
         ];
 
         try {
+            // Сначала удаляем старую клавиатуру (если есть)
+            $telegram->sendMessage([
+                'chat_id' => $driverTelegramId,
+                'text' => '.',
+                'reply_markup' => json_encode(['remove_keyboard' => true])
+            ]);
+            
+            // Потом отправляем сообщение с inline кнопками
             $telegram->sendMessage([
                 'chat_id' => $driverTelegramId,
                 'text' => $message,
