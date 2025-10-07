@@ -1406,27 +1406,22 @@ class botManager {
         $message .= "\n💰 <b>Сумма:</b> " . ($deal[botManager::DRIVER_SUM_FIELD] ?? 'Не указана') . " руб.\n\n";
         $message .= "Пожалуйста, подтвердите готовность к выполнению заявки:";
 
-        // Создаем клавиатуру с кнопками
-        $keyboard = new \Telegram\Bot\Keyboard\Keyboard();
-        $keyboard->inlineKeyboard([
-            [
-                $keyboard->inlineButton([
-                    'text' => '✅ Начать выполнение',
-                    'callback_data' => "start_$dealId"
-                ]),
-                $keyboard->inlineButton([
-                    'text' => '❌ Отказаться',
-                    'callback_data' => "reject_$dealId"
-                ])
+        // Создаем клавиатуру с кнопками (inline keyboard)
+        $keyboard = [
+            'inline_keyboard' => [
+                [
+                    ['text' => '✅ Начать выполнение', 'callback_data' => "start_$dealId"],
+                    ['text' => '❌ Отказаться', 'callback_data' => "reject_$dealId"]
+                ]
             ]
-        ]);
+        ];
 
         try {
             $telegram->sendMessage([
                 'chat_id' => $driverTelegramId,
                 'text' => $message,
                 'parse_mode' => 'HTML',
-                'reply_markup' => $keyboard
+                'reply_markup' => json_encode($keyboard)
             ]);
 
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
