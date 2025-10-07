@@ -20,7 +20,7 @@ class botManager {
     public const ADDRESS_TO_FIELD               = 'UF_CRM_1751269175432';
     public const ADDRESS_TO_FIELD_SERVICE       = 'UF_CRM_1751638529';
     public const ADDITIONAL_CONDITIONS_FIELD    = 'UF_CRM_1751269256380';
-    public const INTERMEDIATE_POINTS_FIELD      = 'UF_CRM_1754228146'; // Промежуточные точки
+    public const INTERMEDIATE_POINTS_FIELD      = 'UF_CRM_1751822573510'; // Промежуточные точки
     public const FLIGHT_NUMBER_FIELD            = 'UF_CRM_1751271774391'; // Номер рейса
     public const CAR_CLASS_FIELD                = 'UF_CRM_1751271728682'; // Класс автомобиля
     public const DRIVER_SUM_FIELD               = 'UF_CRM_1751271862251';
@@ -28,9 +28,10 @@ class botManager {
     public const TRAVEL_DATE_TIME_FIELD         = 'UF_CRM_1751269222959';
     public const TRAVEL_DATE_TIME_FIELD_SERVICE = 'UF_CRM_1751638617';
     public const ADDITIONAL_CONDITIONS_FIELD_SERVICE = 'UF_CRM_1758709126'; // REMINDER_SENT_FIELD (используем как SERVICE)
-    public const PASSENGERS_FIELD_SERVICE = 'UF_CRM_1758709139'; // REMINDER_CONFIRMED_FIELD (используем как SERVICE)
+    public const PASSENGERS_FIELD = 'UF_CRM_1751271798896'; // Пассажиры
+    public const PASSENGERS_FIELD_SERVICE = 'UF_CRM_1759653762'; // SERVICE: Пассажиры
+    public const INTERMEDIATE_POINTS_FIELD_SERVICE = 'UF_CRM_1754228146'; // SERVICE: Промежуточные точки
     public const FLIGHT_NUMBER_FIELD_SERVICE = 'UF_CRM_1758710216'; // REMINDER_NOTIFICATION_SENT_FIELD (используем как SERVICE)
-    public const CAR_CLASS_FIELD_SERVICE = 'UF_CRM_1754228146'; // Промежуточные точки (служ.) - используем для SERVICE копии класса авто
     public const DRIVER_ACCEPTED_STAGE_ID       = 'PREPAYMENT_INVOICE'; // Водитель взял заявку
     public const NEW_DEAL_STAGE_ID              = 'NEW';
     public const DRIVER_CHOICE_STAGE_ID         = 'PREPARATION';
@@ -1029,19 +1030,24 @@ class botManager {
      * @param array|null $oldValues Старые значения полей из webhook (опционально)
      */
     public static function dealChangeHandle(int $dealId, Api $telegram, Update $result, ?array $oldValues = null): void {
-        if (!class_exists("CRest")) { require_once(__DIR__ . "/crest/crest.php"); }
+        if (!class_exists("CRest")) { require_once("/home/telegramBot/crest/crest.php"); }
 
         // Логирование начала обработки
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
             date('Y-m-d H:i:s') . " - dealChangeHandle started for deal $dealId\n", FILE_APPEND);
 
-        // Получаем текущую сделку
+        // Получаем текущую сделку СО ВСЕМИ SERVICE полями
         $deal = \CRest::call('crm.deal.get', [
             'id' => $dealId,
             'select' => [
                 '*',
-                'UF_CRM_1751271798896', // Пассажиры
-                botManager::INTERMEDIATE_POINTS_FIELD // Промежуточные точки
+                botManager::PASSENGERS_FIELD, // Пассажиры
+                botManager::INTERMEDIATE_POINTS_FIELD, // Промежуточные точки
+                botManager::ADDRESS_FROM_FIELD_SERVICE, // SERVICE: Откуда
+                botManager::ADDRESS_TO_FIELD_SERVICE, // SERVICE: Куда
+                botManager::TRAVEL_DATE_TIME_FIELD_SERVICE, // SERVICE: Время
+                botManager::INTERMEDIATE_POINTS_FIELD_SERVICE, // SERVICE: Промежуточные точки
+                botManager::PASSENGERS_FIELD_SERVICE, // SERVICE: Пассажиры
             ]
         ])['result'];
 
@@ -1073,74 +1079,64 @@ class botManager {
 
         $driverTelegramId = (int) $driver[botManager::DRIVER_TELEGRAM_ID_FIELD];
 
-        // Если старые значения не переданы напрямую, пытаемся получить из $_REQUEST
-        if ($oldValues === null && isset($_REQUEST['data']['FIELDS']['OLD'])) {
-            $oldValues = $_REQUEST['data']['FIELDS']['OLD'];
-        }
-
-        // Если старых значений нет - не можем сравнить изменения
-        if (empty($oldValues)) {
-            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
-                date('Y-m-d H:i:s') . " - No OLD values provided for deal $dealId, skipping\n", FILE_APPEND);
-            return;
-        }
-
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
-            date('Y-m-d H:i:s') . " - OLD values: " . print_r($oldValues, true) . "\n", FILE_APPEND);
+            date('Y-m-d H:i:s') . " - Using SERVICE fields for change detection\n", FILE_APPEND);
 
-        // Проверяем изменения ТОЛЬКО в 5 нужных полях
+        // Проверяем изменения используя SERVICE поля (а не OLD values из webhook)
         $changes = [];
+        $updateServiceFields = [];
 
         // 1. Точка А (откуда)
-        $oldAddressFrom = $oldValues[botManager::ADDRESS_FROM_FIELD] ?? null;
-        $newAddressFrom = $deal[botManager::ADDRESS_FROM_FIELD];
-        if ($oldAddressFrom !== null && $oldAddressFrom != $newAddressFrom && !empty($newAddressFrom)) {
+        $serviceAddressFrom = $deal[botManager::ADDRESS_FROM_FIELD_SERVICE] ?? '';
+        $currentAddressFrom = $deal[botManager::ADDRESS_FROM_FIELD] ?? '';
+        
+        if ($serviceAddressFrom && $serviceAddressFrom != $currentAddressFrom && !empty($currentAddressFrom)) {
             $changes[] = [
                 'field' => 'addressFrom',
                 'emoji' => '🅰️',
                 'label' => 'Откуда',
-                'old' => $oldAddressFrom,
-                'new' => $newAddressFrom
+                'old' => $serviceAddressFrom,
+                'new' => $currentAddressFrom
             ];
+            $updateServiceFields[botManager::ADDRESS_FROM_FIELD_SERVICE] = $currentAddressFrom;
         }
 
         // 2. Точка Б (куда)
-        $oldAddressTo = $oldValues[botManager::ADDRESS_TO_FIELD] ?? null;
-        $newAddressTo = $deal[botManager::ADDRESS_TO_FIELD];
-        if ($oldAddressTo !== null && $oldAddressTo != $newAddressTo && !empty($newAddressTo)) {
+        $serviceAddressTo = $deal[botManager::ADDRESS_TO_FIELD_SERVICE] ?? '';
+        $currentAddressTo = $deal[botManager::ADDRESS_TO_FIELD] ?? '';
+        
+        if ($serviceAddressTo && $serviceAddressTo != $currentAddressTo && !empty($currentAddressTo)) {
             $changes[] = [
                 'field' => 'addressTo',
                 'emoji' => '🅱️',
                 'label' => 'Куда',
-                'old' => $oldAddressTo,
-                'new' => $newAddressTo
+                'old' => $serviceAddressTo,
+                'new' => $currentAddressTo
             ];
+            $updateServiceFields[botManager::ADDRESS_TO_FIELD_SERVICE] = $currentAddressTo;
         }
 
         // 3. Время поездки
-        $oldDateTime = $oldValues[botManager::TRAVEL_DATE_TIME_FIELD] ?? null;
-        $newDateTime = $deal[botManager::TRAVEL_DATE_TIME_FIELD];
-        if ($oldDateTime !== null && $oldDateTime != $newDateTime && !empty($newDateTime)) {
+        $serviceDateTime = $deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE] ?? '';
+        $currentDateTime = $deal[botManager::TRAVEL_DATE_TIME_FIELD] ?? '';
+        
+        if ($serviceDateTime && $serviceDateTime != $currentDateTime && !empty($currentDateTime)) {
             // Форматируем дату в человеческий вид
-            $oldFormatted = $oldDateTime;
-            $newFormatted = $newDateTime;
+            $oldFormatted = $serviceDateTime;
+            $newFormatted = $currentDateTime;
 
-            if ($oldDateTime) {
+            if ($serviceDateTime) {
                 try {
-                    $oldDate = new \DateTime($oldDateTime);
+                    $oldDate = new \DateTime($serviceDateTime);
                     $oldFormatted = $oldDate->format('d.m.Y H:i');
-                } catch (Exception $e) {
-                    // Оставляем как есть если не удалось распарсить
-                }
+                } catch (Exception $e) {}
             }
 
-            if ($newDateTime) {
+            if ($currentDateTime) {
                 try {
-                    $newDate = new \DateTime($newDateTime);
+                    $newDate = new \DateTime($currentDateTime);
                     $newFormatted = $newDate->format('d.m.Y H:i');
-                } catch (Exception $e) {
-                    // Оставляем как есть если не удалось распарсить
-                }
+                } catch (Exception $e) {}
             }
 
             $changes[] = [
@@ -1150,41 +1146,53 @@ class botManager {
                 'old' => $oldFormatted,
                 'new' => $newFormatted
             ];
+            $updateServiceFields[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE] = $currentDateTime;
         }
 
         // 4. Промежуточные точки
-        $oldIntermediate = $oldValues[botManager::INTERMEDIATE_POINTS_FIELD] ?? null;
-        $newIntermediate = $deal[botManager::INTERMEDIATE_POINTS_FIELD];
-        if ($oldIntermediate !== null && $oldIntermediate != $newIntermediate) {
+        $serviceIntermediate = $deal[botManager::INTERMEDIATE_POINTS_FIELD_SERVICE] ?? '';
+        $currentIntermediate = $deal[botManager::INTERMEDIATE_POINTS_FIELD] ?? '';
+        
+        // Обработка массивов
+        if (is_array($currentIntermediate)) {
+            $currentIntermediate = implode(", ", $currentIntermediate);
+        }
+        if (is_array($serviceIntermediate)) {
+            $serviceIntermediate = implode(", ", $serviceIntermediate);
+        }
+        
+        if ($serviceIntermediate && $serviceIntermediate != $currentIntermediate) {
             $changes[] = [
                 'field' => 'intermediatePoints',
                 'emoji' => '🗺️',
                 'label' => 'Промежуточные точки',
-                'old' => $oldIntermediate ?: 'Не указано',
-                'new' => $newIntermediate ?: 'Не указано'
+                'old' => $serviceIntermediate ?: 'Не указано',
+                'new' => $currentIntermediate ?: 'Не указано'
             ];
+            $updateServiceFields[botManager::INTERMEDIATE_POINTS_FIELD_SERVICE] = $currentIntermediate;
         }
-
+        
         // 5. Пассажиры
-        $oldPassengers = $oldValues['UF_CRM_1751271798896'] ?? null;
-        $newPassengers = $deal['UF_CRM_1751271798896'];
-
-        // Обработка массивов пассажиров
-        if (is_array($oldPassengers)) {
-            $oldPassengers = implode(", ", $oldPassengers);
+        $servicePassengers = $deal[botManager::PASSENGERS_FIELD_SERVICE] ?? '';
+        $currentPassengers = $deal[botManager::PASSENGERS_FIELD] ?? '';
+        
+        // Обработка массивов
+        if (is_array($currentPassengers)) {
+            $currentPassengers = implode(", ", $currentPassengers);
         }
-        if (is_array($newPassengers)) {
-            $newPassengers = implode(", ", $newPassengers);
+        if (is_array($servicePassengers)) {
+            $servicePassengers = implode(", ", $servicePassengers);
         }
-
-        if ($oldPassengers !== null && $oldPassengers != $newPassengers) {
+        
+        if ($servicePassengers && $servicePassengers != $currentPassengers) {
             $changes[] = [
                 'field' => 'passengers',
                 'emoji' => '👥',
                 'label' => 'Пассажиры',
-                'old' => $oldPassengers ?: 'Не указано',
-                'new' => $newPassengers ?: 'Не указано'
+                'old' => $servicePassengers ?: 'Не указано',
+                'new' => $currentPassengers ?: 'Не указано'
             ];
+            $updateServiceFields[botManager::PASSENGERS_FIELD_SERVICE] = $currentPassengers;
         }
 
         // Если изменений нет - ничего не отправляем
@@ -1226,6 +1234,17 @@ class botManager {
 
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
                 date('Y-m-d H:i:s') . " - Change notification sent successfully for deal $dealId\n", FILE_APPEND);
+
+            // ОБНОВЛЯЕМ SERVICE ПОЛЯ с текущими значениями
+            if (!empty($updateServiceFields)) {
+                \CRest::call('crm.deal.update', [
+                    'id' => $dealId,
+                    'fields' => $updateServiceFields
+                ]);
+                
+                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
+                    date('Y-m-d H:i:s') . " - SERVICE fields updated: " . print_r($updateServiceFields, true) . "\n", FILE_APPEND);
+            }
 
         } catch (Exception $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
