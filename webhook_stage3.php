@@ -21,14 +21,21 @@ try {
     file_put_contents(__DIR__ . '/logs/webhook_debug.log',
         date('Y-m-d H:i:s') . " - REQUEST: " . print_r($_REQUEST, true) . "\n", FILE_APPEND);
     
-    // Проверяем, что это Bitrix24 webhook
-    if (empty($_REQUEST['event']) || $_REQUEST['event'] != 'ONCRMDEALUPDATE') {
-        http_response_code(400);
-        exit('Invalid event');
+    // Получаем ID сделки из разных форматов webhook
+    $dealId = 0;
+    
+    // Формат 1: Исходящий вебхук от бизнес-процесса (document_id)
+    if (!empty($_REQUEST['document_id']) && is_array($_REQUEST['document_id'])) {
+        $documentId = $_REQUEST['document_id'][2] ?? '';
+        if (preg_match('/DEAL_(\d+)/', $documentId, $matches)) {
+            $dealId = (int) $matches[1];
+        }
     }
     
-    // Получаем ID сделки
-    $dealId = (int) $_REQUEST['data']['FIELDS']['ID'];
+    // Формат 2: Событие ONCRMDEALUPDATE
+    if (empty($dealId) && !empty($_REQUEST['data']['FIELDS']['ID'])) {
+        $dealId = (int) $_REQUEST['data']['FIELDS']['ID'];
+    }
     
     if (empty($dealId)) {
         http_response_code(400);
