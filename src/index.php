@@ -86,8 +86,15 @@ try {
         } elseif ($deal && $deal['STAGE_ID'] == 'PREPAYMENT_INVOICE') {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal $dealId is PREPAYMENT_INVOICE\n", FILE_APPEND);
             
-            // Проверяем, есть ли назначенный водитель с Telegram ID
-            if (!empty($deal[botManager::DRIVER_ID_FIELD]) && $deal[botManager::DRIVER_ID_FIELD] > 0) {
+            // Проверяем, была ли изменена стадия (OLD STAGE_ID != NEW STAGE_ID)
+            $oldStageId = $_REQUEST['data']['FIELDS']['OLD']['STAGE_ID'] ?? null;
+            $isStageChanged = !empty($oldStageId) && $oldStageId !== 'PREPAYMENT_INVOICE';
+            
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
+                date('Y-m-d H:i:s') . " - Stage changed: " . ($isStageChanged ? 'YES' : 'NO') . " (old: $oldStageId)\n", FILE_APPEND);
+            
+            // Отправляем сообщение только если стадия была изменена (ручной перевод на 3-ю стадию)
+            if ($isStageChanged && !empty($deal[botManager::DRIVER_ID_FIELD]) && $deal[botManager::DRIVER_ID_FIELD] > 0) {
                 $driver = \CRest::call('crm.contact.get', [
                     'id' => $deal[botManager::DRIVER_ID_FIELD],
                     'select' => ['ID', botManager::DRIVER_TELEGRAM_ID_FIELD]
@@ -105,9 +112,6 @@ try {
                     file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
                         date('Y-m-d H:i:s') . " - Driver has no Telegram ID for deal $dealId\n", FILE_APPEND);
                 }
-            } else {
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
-                    date('Y-m-d H:i:s') . " - No driver assigned for deal $dealId\n", FILE_APPEND);
             }
             
             // Также проверяем изменения в полях (как было раньше)
@@ -126,8 +130,15 @@ try {
         } elseif ($deal && $deal['STAGE_ID'] == 'EXECUTING') {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal $dealId is EXECUTING\n", FILE_APPEND);
             
-            // Проверяем, есть ли назначенный водитель с Telegram ID
-            if (!empty($deal[botManager::DRIVER_ID_FIELD]) && $deal[botManager::DRIVER_ID_FIELD] > 0) {
+            // Проверяем, была ли изменена стадия (OLD STAGE_ID != NEW STAGE_ID)
+            $oldStageId = $_REQUEST['data']['FIELDS']['OLD']['STAGE_ID'] ?? null;
+            $isStageChanged = !empty($oldStageId) && $oldStageId !== 'EXECUTING';
+            
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
+                date('Y-m-d H:i:s') . " - Stage changed: " . ($isStageChanged ? 'YES' : 'NO') . " (old: $oldStageId)\n", FILE_APPEND);
+            
+            // Отправляем сообщение только если стадия была изменена (ручной перевод на 3-ю стадию или EXECUTING)
+            if ($isStageChanged && !empty($deal[botManager::DRIVER_ID_FIELD]) && $deal[botManager::DRIVER_ID_FIELD] > 0) {
                 $driver = \CRest::call('crm.contact.get', [
                     'id' => $deal[botManager::DRIVER_ID_FIELD],
                     'select' => ['ID', botManager::DRIVER_TELEGRAM_ID_FIELD]
@@ -145,9 +156,6 @@ try {
                     file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
                         date('Y-m-d H:i:s') . " - Driver has no Telegram ID for deal $dealId (EXECUTING)\n", FILE_APPEND);
                 }
-            } else {
-                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
-                    date('Y-m-d H:i:s') . " - No driver assigned for deal $dealId (EXECUTING)\n", FILE_APPEND);
             }
             
             // Проверяем изменения в полях для стадии "Заявка выполняется"
