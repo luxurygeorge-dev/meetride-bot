@@ -93,8 +93,8 @@ echo "\n";
 
 // Тест 5: Проверка безопасности
 echo "5. Проверка безопасности:\n";
-if (botManager::DRIVERS_GROUP_CHAT_ID == -1001649190984) {
-    echo "   ✅ Используется ТЕСТОВАЯ группа (-1001649190984)\n";
+if (botManager::DRIVERS_GROUP_CHAT_ID == -4704206955) {
+    echo "   ✅ Используется ТЕСТОВАЯ группа (-4704206955)\n";
 } else {
     echo "   ❌ ОШИБКА! Используется группа: " . botManager::DRIVERS_GROUP_CHAT_ID . "\n";
 }

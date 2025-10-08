@@ -18,7 +18,7 @@ BACKUP_MANAGER="/root/meetride/botManager.php"
 
 # Chat IDs
 PRODUCTION_CHAT_ID="-1002544521661"
-TEST_CHAT_ID="-1001649190984"
+TEST_CHAT_ID="-4704206955"
 
 echo -e "${BLUE}🔄 MeetRide Bot Environment Switcher${NC}"
 echo "====================================="
