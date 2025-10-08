@@ -50,6 +50,36 @@ class botManager {
         
         return $cleanNumber;
     }
+    
+    /**
+     * Форматирует дату из ISO формата в человекочитаемый вид
+     * @param string|null $dateString Дата в формате ISO (2025-01-10T10:00:00+03:00)
+     * @return string Дата в формате "10 января 2025, 10:00" или "Не указано"
+     */
+    public static function formatDateTime(?string $dateString): string {
+        if (empty($dateString)) {
+            return 'Не указано';
+        }
+        
+        try {
+            $date = new \DateTime($dateString);
+            
+            $months = [
+                1 => 'января', 2 => 'февраля', 3 => 'марта', 4 => 'апреля',
+                5 => 'мая', 6 => 'июня', 7 => 'июля', 8 => 'августа',
+                9 => 'сентября', 10 => 'октября', 11 => 'ноября', 12 => 'декабря'
+            ];
+            
+            $day = $date->format('j');
+            $month = $months[(int)$date->format('n')];
+            $year = $date->format('Y');
+            $time = $date->format('H:i');
+            
+            return "$day $month $year, $time";
+        } catch (\Exception $e) {
+            return $dateString; // Возвращаем исходную строку, если не удалось распарсить
+        }
+    }
     public const NEW_DEAL_STAGE_ID              = 'NEW';
     public const DRIVER_CHOICE_STAGE_ID         = 'PREPARATION';
     public const TRAVEL_STARTED_STAGE_ID         = 'EXECUTING'; // Заявка выполняется
@@ -1377,7 +1407,7 @@ class botManager {
         $message .= "👋 Здравствуйте, $driverName!\n\n";
         $message .= "🅰️ <b>Откуда:</b> " . ($deal[botManager::ADDRESS_FROM_FIELD] ?? 'Не указано') . "\n";
         $message .= "🅱️ <b>Куда:</b> " . ($deal[botManager::ADDRESS_TO_FIELD] ?? 'Не указано') . "\n";
-        $message .= "⏰ <b>Время:</b> " . ($deal[botManager::TRAVEL_DATE_TIME_FIELD] ?? 'Не указано') . "\n";
+        $message .= "⏰ <b>Время:</b> " . self::formatDateTime($deal[botManager::TRAVEL_DATE_TIME_FIELD] ?? null) . "\n";
         
         if (!empty($deal[botManager::INTERMEDIATE_POINTS_FIELD])) {
             $intermediatePoints = $deal[botManager::INTERMEDIATE_POINTS_FIELD];
@@ -1546,26 +1576,12 @@ class botManager {
             }
         }
         // Форматируем дату в человеческий вид
-        $dateText = $deal[botManager::TRAVEL_DATE_TIME_FIELD];
-        if ($dateText) {
-            $date = new \DateTime($dateText);
-            $dateText = $date->format('d.m.Y H:i');
-        }
+        $dateText = self::formatDateTime($deal[botManager::TRAVEL_DATE_TIME_FIELD] ?? null);
         
         if ($newDate !== null) {
-            // Форматируем старую дату
-            $oldDate = $deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE];
-            if ($oldDate) {
-                $oldDateFormatted = (new \DateTime($oldDate))->format('d.m.Y H:i');
-            } else {
-                $oldDateFormatted = $oldDate;
-            }
-            
-            // Форматируем новую дату
-            $newDateFormatted = $newDate;
-            if ($newDate) {
-                $newDateFormatted = (new \DateTime($newDate))->format('d.m.Y H:i');
-            }
+            // Форматируем старую и новую даты
+            $oldDateFormatted = self::formatDateTime($deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE] ?? null);
+            $newDateFormatted = self::formatDateTime($newDate);
             
             $dateText = "<s>{$oldDateFormatted}</s> ➔ {$newDateFormatted}";
         }
@@ -1639,11 +1655,7 @@ HTML;
         }
         
         // Форматируем дату в удобочитаемый вид
-        $dateText = $deal[botManager::TRAVEL_DATE_TIME_FIELD];
-        if ($dateText) {
-            $date = new \DateTime($dateText);
-            $dateText = $date->format('d.m.Y H:i');
-        }
+        $dateText = self::formatDateTime($deal[botManager::TRAVEL_DATE_TIME_FIELD] ?? null);
         
         $fromAddress = $deal[botManager::ADDRESS_FROM_FIELD];
         $toAddress = $deal[botManager::ADDRESS_TO_FIELD];
@@ -1695,11 +1707,7 @@ HTML;
         }
         
         // Форматируем дату в удобочитаемый вид
-        $dateText = $deal[botManager::TRAVEL_DATE_TIME_FIELD];
-        if ($dateText) {
-            $date = new \DateTime($dateText);
-            $dateText = $date->format('d.m.Y H:i');
-        }
+        $dateText = self::formatDateTime($deal[botManager::TRAVEL_DATE_TIME_FIELD] ?? null);
         
         $fromAddress = $deal[botManager::ADDRESS_FROM_FIELD];
         $toAddress = $deal[botManager::ADDRESS_TO_FIELD];
@@ -2050,11 +2058,7 @@ HTML;
         }
         
         // Форматируем дату в удобочитаемый вид
-        $dateText = $deal[botManager::TRAVEL_DATE_TIME_FIELD];
-        if ($dateText) {
-            $date = new \DateTime($dateText);
-            $dateText = $date->format('d.m.Y H:i');
-        }
+        $dateText = self::formatDateTime($deal[botManager::TRAVEL_DATE_TIME_FIELD] ?? null);
         
         $fromAddress = $deal[botManager::ADDRESS_FROM_FIELD];
         $toAddress = $deal[botManager::ADDRESS_TO_FIELD];
@@ -2140,26 +2144,14 @@ HTML;
         }
         
         // Форматируем дату в удобочитаемый вид
-        $dateText = $deal[botManager::TRAVEL_DATE_TIME_FIELD];
-        if ($dateText) {
-            $date = new \DateTime($dateText);
-            $dateText = $date->format('d.m.Y H:i');
-        }
+        $dateText = self::formatDateTime($deal[botManager::TRAVEL_DATE_TIME_FIELD] ?? null);
         
         if ($newDate !== null) {
             // Форматируем старую дату
-            $oldDate = $deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE];
-            if ($oldDate) {
-                $oldDateFormatted = (new \DateTime($oldDate))->format('d.m.Y H:i');
-            } else {
-                $oldDateFormatted = $oldDate;
-            }
+            $oldDateFormatted = self::formatDateTime($deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE] ?? null);
             
             // Форматируем новую дату
-            $newDateFormatted = $newDate;
-            if ($newDate) {
-                $newDateFormatted = (new \DateTime($newDate))->format('d.m.Y H:i');
-            }
+            $newDateFormatted = self::formatDateTime($newDate);
             
             $dateText = "<s>{$oldDateFormatted}</s> ➔ {$newDateFormatted}";
         }
@@ -2272,26 +2264,14 @@ HTML;
         }
         
         // Форматируем дату в удобочитаемый вид
-        $dateText = $deal[botManager::TRAVEL_DATE_TIME_FIELD];
-        if ($dateText) {
-            $date = new \DateTime($dateText);
-            $dateText = $date->format('d.m.Y H:i');
-        }
+        $dateText = self::formatDateTime($deal[botManager::TRAVEL_DATE_TIME_FIELD] ?? null);
         
         if ($newDate !== null) {
             // Форматируем старую дату
-            $oldDate = $deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE];
-            if ($oldDate) {
-                $oldDateFormatted = (new \DateTime($oldDate))->format('d.m.Y H:i');
-            } else {
-                $oldDateFormatted = $oldDate;
-            }
+            $oldDateFormatted = self::formatDateTime($deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE] ?? null);
             
             // Форматируем новую дату
-            $newDateFormatted = $newDate;
-            if ($newDate) {
-                $newDateFormatted = (new \DateTime($newDate))->format('d.m.Y H:i');
-            }
+            $newDateFormatted = self::formatDateTime($newDate);
             
             $dateText = "<s>{$oldDateFormatted}</s> ➔ {$newDateFormatted}";
         }
@@ -2433,17 +2413,8 @@ HTML;
                     break;
                     
                 case 'date':
-                    $oldValue = $deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE];
-                    if ($oldValue) {
-                        $oldDate = (new \DateTime($oldValue))->format('d.m.Y H:i');
-                    } else {
-                        $oldDate = $oldValue;
-                    }
-                    if ($newValue) {
-                        $newDate = (new \DateTime($newValue))->format('d.m.Y H:i');
-                    } else {
-                        $newDate = $newValue;
-                    }
+                    $oldDate = self::formatDateTime($deal[botManager::TRAVEL_DATE_TIME_FIELD_SERVICE] ?? null);
+                    $newDate = self::formatDateTime($newValue);
                     $text .= "📆 <b>Дата и время:</b> <s>{$oldDate}</s> ➔ {$newDate}\n\n";
                     break;
                     
