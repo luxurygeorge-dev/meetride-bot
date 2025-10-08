@@ -63190,3 +63190,17 @@ PHP Fatal error:  Cannot redeclare Store\botManager::writeToLog() in /root/meetr
 📋 Логи записаны в: /root/meetride/logs/reminder_scheduler.log
 
 🎉 Скрипт выполнен успешно
+✅ Система напоминаний выполнена!
+📋 Напоминаний отправлено: 0
+⚠️ Уведомлений ответственному: 0
+❌ Ошибок: 0
+📋 Логи записаны в: /root/meetride/logs/reminder_scheduler.log
+
+🎉 Скрипт выполнен успешно
+✅ Система напоминаний выполнена!
+📋 Напоминаний отправлено: 0
+⚠️ Уведомлений ответственному: 0
+❌ Ошибок: 0
+📋 Логи записаны в: /root/meetride/logs/reminder_scheduler.log
+
+🎉 Скрипт выполнен успешно
