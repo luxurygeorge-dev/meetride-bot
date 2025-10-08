@@ -1476,6 +1476,32 @@ class botManager {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
                 date('Y-m-d H:i:s') . " - Private message sent successfully to driver $driverTelegramId for deal $dealId\n", FILE_APPEND);
 
+            // Инициализируем SERVICE поля для отслеживания изменений
+            $passengers = $deal[botManager::PASSENGERS_FIELD];
+            if (is_array($passengers)) {
+                $passengers = implode(", ", $passengers);
+            }
+            
+            $intermediatePoints = $deal[botManager::INTERMEDIATE_POINTS_FIELD];
+            if (is_array($intermediatePoints)) {
+                $intermediatePoints = implode(", ", $intermediatePoints);
+            }
+            
+            \CRest::call('crm.deal.update', [
+                'id' => $dealId,
+                'fields' => [
+                    botManager::ADDRESS_FROM_FIELD_SERVICE => $deal[botManager::ADDRESS_FROM_FIELD],
+                    botManager::ADDRESS_TO_FIELD_SERVICE => $deal[botManager::ADDRESS_TO_FIELD],
+                    botManager::TRAVEL_DATE_TIME_FIELD_SERVICE => $deal[botManager::TRAVEL_DATE_TIME_FIELD],
+                    botManager::PASSENGERS_FIELD_SERVICE => $passengers,
+                    botManager::INTERMEDIATE_POINTS_FIELD_SERVICE => $intermediatePoints,
+                    botManager::ORDER_NUMBER_SERVICE_FIELD => self::extractOrderNumber($deal['TITLE'] ?? '')
+                ]
+            ]);
+            
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
+                date('Y-m-d H:i:s') . " - SERVICE fields initialized for deal $dealId\n", FILE_APPEND);
+
         } catch (Exception $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
                 date('Y-m-d H:i:s') . " - Error sending private message to driver $driverTelegramId for deal $dealId: " . $e->getMessage() . "\n", FILE_APPEND);
