@@ -26,7 +26,7 @@ sudo tee "$TEST_DIR/config.php" > /dev/null << 'EOF'
 // Тестовая конфигурация MeetRide Bot
 define('BOT_TOKEN', 'TEST_BOT_TOKEN');
 define('WEBHOOK_URL', 'https://your-domain.com/meetRiedeBot-test/');
-define('DRIVERS_GROUP_CHAT_ID', -4704206955); // Тестовая группа
+define('DRIVERS_GROUP_CHAT_ID', -1001649190984); // Тестовая группа
 define('BITRIX24_DOMAIN', 'your-test.bitrix24.ru');
 define('BITRIX24_WEBHOOK_CODE', 'TEST_WEBHOOK_CODE');
 define('DRIVER_ACCEPTED_STAGE_ID', 'PREPAYMENT_INVOICE');

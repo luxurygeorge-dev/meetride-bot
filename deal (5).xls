@@ -1,0 +1,1661 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>meetride.bitrix24.ru|1|ffe6aa778ec72629314989b77dcb2fd0</x:Name><x:WorksheetOptions><x:DisplayGridlines></x:DisplayGridlines></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>
+						<tbody><tr>
+							<th style="font-weight:bold;">ID</th>
+							<th style="font-weight:bold;">Тип</th>
+							<th style="font-weight:bold;">Название</th>
+							<th style="font-weight:bold;">Значение списочных полей</th>
+							<th style="font-weight:bold;">Сортировка</th>
+						</tr>
+													<tr class="дата_поиск" data-poisk="ID ЦЕЛОЕ ЧИСЛО ID  ">
+								<td>
+									ID									
+																	</td>
+								<td>Целое число</td>
+								<td>
+									
+									ID								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="TITLE СТРОКА НАЗВАНИЕ  ">
+								<td>
+									TITLE									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Название								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="TYPE_ID СПРАВОЧНИК ТИП  ">
+								<td>
+									TYPE_ID									
+																	</td>
+								<td>Справочник</td>
+								<td>
+									
+									Тип								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="CATEGORY_ID CRM_CATEGORY ВОРОНКА  ">
+								<td>
+									CATEGORY_ID									
+																	</td>
+								<td>crm_category</td>
+								<td>
+									
+									Воронка								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="STAGE_ID СПРАВОЧНИК СТАДИЯ СДЕЛКИ  ">
+								<td>
+									STAGE_ID									
+																	</td>
+								<td>Справочник</td>
+								<td>
+									
+									Стадия сделки								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="STAGE_SEMANTIC_ID СТРОКА ГРУППА СТАДИИ  ">
+								<td>
+									STAGE_SEMANTIC_ID									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Группа стадии								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="IS_NEW CHAR НОВАЯ СДЕЛКА  ">
+								<td>
+									IS_NEW									
+																	</td>
+								<td>char</td>
+								<td>
+									
+									Новая сделка								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="IS_RECURRING CHAR РЕГУЛЯРНАЯ СДЕЛКА  ">
+								<td>
+									IS_RECURRING									
+																	</td>
+								<td>char</td>
+								<td>
+									
+									Регулярная сделка								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="IS_RETURN_CUSTOMER CHAR ПОВТОРНАЯ СДЕЛКА  ">
+								<td>
+									IS_RETURN_CUSTOMER									
+																	</td>
+								<td>char</td>
+								<td>
+									
+									Повторная сделка								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="IS_REPEATED_APPROACH CHAR ПОВТОРНОЕ ОБРАЩЕНИЕ  ">
+								<td>
+									IS_REPEATED_APPROACH									
+																	</td>
+								<td>char</td>
+								<td>
+									
+									Повторное обращение								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="PROBABILITY ЦЕЛОЕ ЧИСЛО ВЕРОЯТНОСТЬ  ">
+								<td>
+									PROBABILITY									
+																	</td>
+								<td>Целое число</td>
+								<td>
+									
+									Вероятность								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="CURRENCY_ID ВАЛЮТА (СИСТЕМНОЕ) ВАЛЮТА  ">
+								<td>
+									CURRENCY_ID									
+																	</td>
+								<td>Валюта (системное)</td>
+								<td>
+									
+									Валюта								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="OPPORTUNITY ЧИСЛО СУММА  ">
+								<td>
+									OPPORTUNITY									
+																	</td>
+								<td>Число</td>
+								<td>
+									
+									Сумма								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="IS_MANUAL_OPPORTUNITY CHAR IS_MANUAL_OPPORTUNITY  ">
+								<td>
+									IS_MANUAL_OPPORTUNITY									
+																	</td>
+								<td>char</td>
+								<td>
+									
+									IS_MANUAL_OPPORTUNITY								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="TAX_VALUE ЧИСЛО СТАВКА НАЛОГА  ">
+								<td>
+									TAX_VALUE									
+																	</td>
+								<td>Число</td>
+								<td>
+									
+									Ставка налога								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="COMPANY_ID CRM_COMPANY КОМПАНИЯ  ">
+								<td>
+									COMPANY_ID									
+																	</td>
+								<td>crm_company</td>
+								<td>
+									
+									Компания								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="CONTACT_ID CRM_CONTACT КОНТАКТ  ">
+								<td>
+									CONTACT_ID									
+																	</td>
+								<td>crm_contact</td>
+								<td>
+									
+									Контакт								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="CONTACT_IDS CRM_CONTACT КОНТАКТЫ  ">
+								<td>
+									CONTACT_IDS									
+																	</td>
+								<td>crm_contact</td>
+								<td>
+									
+									Контакты								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="QUOTE_ID CRM_QUOTE ПРЕДЛОЖЕНИЕ  ">
+								<td>
+									QUOTE_ID									
+																	</td>
+								<td>crm_quote</td>
+								<td>
+									
+									Предложение								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="BEGINDATE ДАТА ДАТА НАЧАЛА  ">
+								<td>
+									BEGINDATE									
+																	</td>
+								<td>Дата</td>
+								<td>
+									
+									Дата начала								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="CLOSEDATE ДАТА ДАТА ЗАВЕРШЕНИЯ  ">
+								<td>
+									CLOSEDATE									
+																	</td>
+								<td>Дата</td>
+								<td>
+									
+									Дата завершения								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="OPENED CHAR ДОСТУПНА ДЛЯ ВСЕХ  ">
+								<td>
+									OPENED									
+																	</td>
+								<td>char</td>
+								<td>
+									
+									Доступна для всех								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="CLOSED CHAR ЗАКРЫТА  ">
+								<td>
+									CLOSED									
+																	</td>
+								<td>char</td>
+								<td>
+									
+									Закрыта								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="COMMENTS СТРОКА КОММЕНТАРИЙ  ">
+								<td>
+									COMMENTS									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Комментарий								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="ASSIGNED_BY_ID ПОЛЬЗОВАТЕЛЬ ОТВЕТСТВЕННЫЙ  ">
+								<td>
+									ASSIGNED_BY_ID									
+																	</td>
+								<td>Пользователь</td>
+								<td>
+									
+									Ответственный								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="CREATED_BY_ID ПОЛЬЗОВАТЕЛЬ КЕМ СОЗДАНА  ">
+								<td>
+									CREATED_BY_ID									
+																	</td>
+								<td>Пользователь</td>
+								<td>
+									
+									Кем создана								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="MODIFY_BY_ID ПОЛЬЗОВАТЕЛЬ КЕМ ИЗМЕНЕНА  ">
+								<td>
+									MODIFY_BY_ID									
+																	</td>
+								<td>Пользователь</td>
+								<td>
+									
+									Кем изменена								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="MOVED_BY_ID ПОЛЬЗОВАТЕЛЬ MOVED_BY_ID  ">
+								<td>
+									MOVED_BY_ID									
+																	</td>
+								<td>Пользователь</td>
+								<td>
+									
+									MOVED_BY_ID								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="DATE_CREATE ДАТА (СИСТЕМНОЕ) ДАТА СОЗДАНИЯ  ">
+								<td>
+									DATE_CREATE									
+																	</td>
+								<td>Дата (системное)</td>
+								<td>
+									
+									Дата создания								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="DATE_MODIFY ДАТА (СИСТЕМНОЕ) ДАТА ИЗМЕНЕНИЯ  ">
+								<td>
+									DATE_MODIFY									
+																	</td>
+								<td>Дата (системное)</td>
+								<td>
+									
+									Дата изменения								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="MOVED_TIME ДАТА (СИСТЕМНОЕ) MOVED_TIME  ">
+								<td>
+									MOVED_TIME									
+																	</td>
+								<td>Дата (системное)</td>
+								<td>
+									
+									MOVED_TIME								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="SOURCE_ID СПРАВОЧНИК ИСТОЧНИК  ">
+								<td>
+									SOURCE_ID									
+																	</td>
+								<td>Справочник</td>
+								<td>
+									
+									Источник								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="SOURCE_DESCRIPTION СТРОКА ДОПОЛНИТЕЛЬНО ОБ ИСТОЧНИКЕ  ">
+								<td>
+									SOURCE_DESCRIPTION									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Дополнительно об источнике								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="LEAD_ID CRM_LEAD ЛИД  ">
+								<td>
+									LEAD_ID									
+																	</td>
+								<td>crm_lead</td>
+								<td>
+									
+									Лид								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="ADDITIONAL_INFO СТРОКА ДОПОЛНИТЕЛЬНАЯ ИНФОРМАЦИЯ  ">
+								<td>
+									ADDITIONAL_INFO									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Дополнительная информация								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="LOCATION_ID LOCATION МЕСТОПОЛОЖЕНИЕ  ">
+								<td>
+									LOCATION_ID									
+																	</td>
+								<td>location</td>
+								<td>
+									
+									Местоположение								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="ORIGINATOR_ID СТРОКА ВНЕШНИЙ ИСТОЧНИК  ">
+								<td>
+									ORIGINATOR_ID									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Внешний источник								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="ORIGIN_ID СТРОКА ИДЕНТИФИКАТОР ЭЛЕМЕНТА ВО ВНЕШНЕМ ИСТОЧНИКЕ  ">
+								<td>
+									ORIGIN_ID									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Идентификатор элемента во внешнем источнике								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UTM_SOURCE СТРОКА РЕКЛАМНАЯ СИСТЕМА  ">
+								<td>
+									UTM_SOURCE									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Рекламная система								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UTM_MEDIUM СТРОКА ТИП ТРАФИКА  ">
+								<td>
+									UTM_MEDIUM									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Тип трафика								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UTM_CAMPAIGN СТРОКА ОБОЗНАЧЕНИЕ РЕКЛАМНОЙ КАМПАНИИ  ">
+								<td>
+									UTM_CAMPAIGN									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Обозначение рекламной кампании								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UTM_CONTENT СТРОКА СОДЕРЖАНИЕ КАМПАНИИ  ">
+								<td>
+									UTM_CONTENT									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Содержание кампании								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UTM_TERM СТРОКА УСЛОВИЕ ПОИСКА КАМПАНИИ  ">
+								<td>
+									UTM_TERM									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									Условие поиска кампании								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="LAST_ACTIVITY_TIME ДАТА (СИСТЕМНОЕ) LAST_ACTIVITY_TIME  ">
+								<td>
+									LAST_ACTIVITY_TIME									
+																	</td>
+								<td>Дата (системное)</td>
+								<td>
+									
+									LAST_ACTIVITY_TIME								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="LAST_ACTIVITY_BY ПОЛЬЗОВАТЕЛЬ LAST_ACTIVITY_BY  ">
+								<td>
+									LAST_ACTIVITY_BY									
+																	</td>
+								<td>Пользователь</td>
+								<td>
+									
+									LAST_ACTIVITY_BY								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="LAST_COMMUNICATION_TIME СТРОКА LAST_COMMUNICATION_TIME  ">
+								<td>
+									LAST_COMMUNICATION_TIME									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+									LAST_COMMUNICATION_TIME								</td>
+								<td>
+																	</td>
+								<td>
+																	</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751269147414 СТРОКА АДРЕС ОТПРАВЛЕНИЯ ">
+								<td>
+									UF_CRM_1751269147414									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751269147414">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751269147414/" target="_blank">Адрес отправления</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751269175432 СТРОКА АДРЕС НАЗНАЧЕНИЯ ">
+								<td>
+									UF_CRM_1751269175432									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751269175432">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751269175432/" target="_blank">Адрес назначения</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751269222959 ДАТА (СИСТЕМНОЕ) ДАТА И ВРЕМЯ ПОЕЗДКИ ">
+								<td>
+									UF_CRM_1751269222959									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751269222959">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Дата (системное)</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751269222959/" target="_blank">Дата и время поездки</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751269256380 СТРОКА ДОП. УСЛОВИЯ / КОММЕНТАРИИ ">
+								<td>
+									UF_CRM_1751269256380									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751269256380">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751269256380/" target="_blank">Доп. условия / комментарии</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751269280604 СПИСОК ТИП ВОДИТЕЛЯ  51 ШТАТНЫЙ 53 ПОДРЯДЧИК ">
+								<td>
+									UF_CRM_1751269280604									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751269280604">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Список</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751269280604/" target="_blank">Тип водителя </a>
+																		</td>
+								<td>
+																			<table class="schedule table table-hover table-sm table-bordered список_авто" id="toExcel1">
+											<tbody><tr>
+												<th style="font-weight:bold;">ID</th>
+												<th style="font-weight:bold;">Значение</th>
+											</tr>
+										
+																							<tr>
+													<td>51</td>
+													<td>Штатный</td>
+												</tr>
+																								<tr>
+													<td>53</td>
+													<td>Подрядчик</td>
+												</tr>
+																						</tbody></table>
+																		</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751271728682 СПИСОК КЛАСС АВТО 119 СТАНДАРТ 93 КОМФОРТ! JOLION, X-CITE, ОПТИМА И ВЫШЕ 95 КОМФОРТ +! КЛАСС D, CAMRY, OPTIMA, K5 И ПОДОБНЫЕ ОТ 2018ГВ 97 МИКРОАВТОБУС! MERCEDES SPRINTER, PEGOUT BOXER И ПОДОБНЫЕ 99 МИНИВЭН! HYUNDAI STAREX И ПОДОБНЫЕ ДО 8МИ МЕСТ 101 МИНИВЭН VIP! MERCEDES V-CLASS, HYUNDAI STARIA И ПОДОБНЫЕ 103 АВТОБУС! ЮТОНГ И ПОДОБНЫЕ ДО 55 МЕСТ 105 БИЗНЕС! BMW 5, MERCEDES E-CLASS И ПОДОБНЫЕ ОТ 2018 ГВ 107 ПРЕДСТАВИТЕЛЬСКИЙ! MERCEDES S-CLASS, MERCEDES MAYBACH, BMW 7 И ПОДОБНЫЕ 109 КРОССОВЕР! JOLION, GEELY ATLAS PRO, И ПОДОБНЫЕ 111 ДЖИП! LAND CRUSER, BMW X 5 И ПОДОБНЫЕ 113 ВНЕДОРОЖНИК! УАЗ ПАТРИОТ И ПОДОБНЫЕ 115 УСЛУГА ТРЕЗВЫЙ ВОДИТЕЛЬ 117 ДОСТАВКА ">
+								<td>
+									UF_CRM_1751271728682									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751271728682">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Список</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751271728682/" target="_blank">Класс авто</a>
+																		</td>
+								<td>
+																			<table class="schedule table table-hover table-sm table-bordered список_авто" id="toExcel1">
+											<tbody><tr>
+												<th style="font-weight:bold;">ID</th>
+												<th style="font-weight:bold;">Значение</th>
+											</tr>
+										
+																							<tr>
+													<td>119</td>
+													<td>Стандарт</td>
+												</tr>
+																								<tr>
+													<td>93</td>
+													<td>Комфорт! Jolion, X-Cite, оптима и выше</td>
+												</tr>
+																								<tr>
+													<td>95</td>
+													<td>Комфорт +! Класс D, Camry, optima, k5 и подобные от 2018гв</td>
+												</tr>
+																								<tr>
+													<td>97</td>
+													<td>Микроавтобус! Mercedes sprinter, pegout boxer и подобные</td>
+												</tr>
+																								<tr>
+													<td>99</td>
+													<td>Минивэн! Hyundai Starex и подобные до 8ми мест</td>
+												</tr>
+																								<tr>
+													<td>101</td>
+													<td>Минивэн VIP! Mercedes V-class, hyundai staria и подобные</td>
+												</tr>
+																								<tr>
+													<td>103</td>
+													<td>Автобус! Ютонг и подобные до 55 мест</td>
+												</tr>
+																								<tr>
+													<td>105</td>
+													<td>Бизнес! BMW 5, MERCEDES E-CLASS И ПОДОБНЫЕ ОТ 2018 ГВ</td>
+												</tr>
+																								<tr>
+													<td>107</td>
+													<td>Представительский! Mercedes s-class, Mercedes Maybach, BMW 7 и подобные</td>
+												</tr>
+																								<tr>
+													<td>109</td>
+													<td>Кроссовер! Jolion, Geely Atlas Pro, и подобные</td>
+												</tr>
+																								<tr>
+													<td>111</td>
+													<td>Джип! Land Cruser, BMW x 5 и подобные</td>
+												</tr>
+																								<tr>
+													<td>113</td>
+													<td>Внедорожник! Уаз патриот и подобные</td>
+												</tr>
+																								<tr>
+													<td>115</td>
+													<td>Услуга ТРЕЗВЫЙ ВОДИТЕЛЬ</td>
+												</tr>
+																								<tr>
+													<td>117</td>
+													<td>Доставка</td>
+												</tr>
+																						</tbody></table>
+																		</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751271774391 СТРОКА НОМЕР РЕЙСА ">
+								<td>
+									UF_CRM_1751271774391									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751271774391">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751271774391/" target="_blank">Номер рейса</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751271798896 СТРОКА ПАССАЖИРЫ (ФИО И ТЕЛЕФОН) ">
+								<td>
+									UF_CRM_1751271798896									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751271798896">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751271798896/" target="_blank">Пассажиры (ФИО и телефон)</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751271841129 ДЕНЬГИ СУММА ДЛЯ КЛИЕНТА ">
+								<td>
+									UF_CRM_1751271841129									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751271841129">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Деньги</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751271841129/" target="_blank">Сумма для клиента</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751271862251 ДЕНЬГИ СУММА ДЛЯ ВОДИТЕЛЯ ">
+								<td>
+									UF_CRM_1751271862251									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751271862251">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Деньги</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751271862251/" target="_blank">Сумма для водителя</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751272181 ПРИВЯЗКА К ЭЛЕМЕНТАМ CRM НАЗНАЧЕННЫЙ ВОДИТЕЛЬ ">
+								<td>
+									UF_CRM_1751272181									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751272181">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Привязка к элементам CRM</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751272181/" target="_blank">Назначенный водитель</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751272308689 СТРОКА ID ЗАЯВКИ В БОТЕ ">
+								<td>
+									UF_CRM_1751272308689									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751272308689">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751272308689/" target="_blank">ID заявки в боте</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751272355936 СПИСОК СТАТУС СИНХРОНИЗАЦИИ  61 ОТПРАВЛЕНО В БОТ 63 ПОЛУЧЕН ОТВЕТ ">
+								<td>
+									UF_CRM_1751272355936									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751272355936">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Список</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751272355936/" target="_blank">Статус синхронизации </a>
+																		</td>
+								<td>
+																			<table class="schedule table table-hover table-sm table-bordered список_авто" id="toExcel1">
+											<tbody><tr>
+												<th style="font-weight:bold;">ID</th>
+												<th style="font-weight:bold;">Значение</th>
+											</tr>
+										
+																							<tr>
+													<td>61</td>
+													<td>отправлено в бот</td>
+												</tr>
+																								<tr>
+													<td>63</td>
+													<td>получен ответ</td>
+												</tr>
+																						</tbody></table>
+																		</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751272374390 СТРОКА ПОСЛЕДНЕЕ ДЕЙСТВИЕ ПО ЗАЯВКЕ ">
+								<td>
+									UF_CRM_1751272374390									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751272374390">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751272374390/" target="_blank">Последнее действие по заявке</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751638441407 ДЕНЬГИ СУММА ДЛЯ ВОДИТЕЛЯ (СЛУЖ) ">
+								<td>
+									UF_CRM_1751638441407									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751638441407">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Деньги</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751638441407/" target="_blank">Сумма для водителя (служ)</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751638512 СТРОКА АДРЕС ОТПРАВЛЕНИЯ (СЛУЖ) ">
+								<td>
+									UF_CRM_1751638512									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751638512">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751638512/" target="_blank">Адрес отправления (служ)</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751638529 СТРОКА АДРЕС НАЗНАЧЕНИЯ (СЛУЖ) ">
+								<td>
+									UF_CRM_1751638529									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751638529">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751638529/" target="_blank">Адрес назначения (служ)</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751638617 ДАТА (СИСТЕМНОЕ) ДАТА И ВРЕМЯ ПОЕЗДКИ (СЛУЖ) ">
+								<td>
+									UF_CRM_1751638617									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751638617">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Дата (системное)</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751638617/" target="_blank">Дата и время поездки (служ)</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1751822573510 СТРОКА ПРОМЕЖУТОЧНЫЕ ТОЧКИ ">
+								<td>
+									UF_CRM_1751822573510									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1751822573510">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1751822573510/" target="_blank">Промежуточные точки</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1754217679 СТРОКА TELEGRAM_COMMON_MESSAGE_ID ">
+								<td>
+									UF_CRM_1754217679									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1754217679">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1754217679/" target="_blank">telegram_common_message_id</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1754228146 СТРОКА ПРОМЕЖУТОЧНЫЕ ТОЧКИ (СЛУЖ.) ">
+								<td>
+									UF_CRM_1754228146									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1754228146">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1754228146/" target="_blank">Промежуточные точки (служ.)</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1754381402 СТРОКА СУММА ПОЕЗДКИ НАЧАЛЬНАЯ ">
+								<td>
+									UF_CRM_1754381402									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1754381402">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1754381402/" target="_blank">Сумма поездки начальная</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1758709126 ДАТА (СИСТЕМНОЕ) НАПОМИНАНИЕ ОТПРАВЛЕНО ">
+								<td>
+									UF_CRM_1758709126									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1758709126">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Дата (системное)</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1758709126/" target="_blank">Напоминание отправлено</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1758709139 ДАТА (СИСТЕМНОЕ) ПОДТВЕРЖДЕНО ВОДИТЕЛЕМ ">
+								<td>
+									UF_CRM_1758709139									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1758709139">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Дата (системное)</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1758709139/" target="_blank">Подтверждено водителем</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1758710216 ДАТА (СИСТЕМНОЕ) УВЕДОМЛЕНИЕ ОТВЕТСТВЕННОМУ ">
+								<td>
+									UF_CRM_1758710216									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1758710216">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Дата (системное)</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1758710216/" target="_blank">Уведомление ответственному</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1759486647 СТРОКА ОПЛАТА ">
+								<td>
+									UF_CRM_1759486647									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1759486647">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1759486647/" target="_blank">Оплата</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1759653762 СТРОКА ПАССАЖИРЫ (СЛУЖ) ">
+								<td>
+									UF_CRM_1759653762									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1759653762">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1759653762/" target="_blank">Пассажиры (служ)</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1759847340 СТРОКА НОМЕР ЗАЯВКИ (СЛУЖ.) ">
+								<td>
+									UF_CRM_1759847340									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1759847340">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1759847340/" target="_blank">Номер заявки (служ.)</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1759917381 СТРОКА SERVICE: КЛАСС АВТОМОБИЛЯ ">
+								<td>
+									UF_CRM_1759917381									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1759917381">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1759917381/" target="_blank">SERVICE: Класс автомобиля</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1759918565 СТРОКА ОТПРАВЛЕНО В ОБЩИЙ ЧАТ ">
+								<td>
+									UF_CRM_1759918565									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1759918565">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1759918565/" target="_blank">Отправлено в общий чат</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+														<tr class="дата_поиск" data-poisk="UF_CRM_1760704449 СТРОКА ДОП. УСЛОВИЯ / КОММЕНТАРИИ (СЛУЖ.) ">
+								<td>
+									UF_CRM_1760704449									
+																		
+									<form class="посчитать" enctype="multipart/form-data" method="POST" style="">
+										
+										
+										
+										<input type="hidden" name="сущность_тип" value="deal">
+										<input type="hidden" name="поле_ID" value="UF_CRM_1760704449">
+										<input type="hidden" name="data[access_token]" value="2047f2680061d6360079d6640000000900000702141566a3deb0d089b91e92dae29dc7">
+										<input type="hidden" name="data[refresh_token]" value="10c619690061d6360079d66400000009000007fe4237bb27bdc33090f73fddeff6d4f8">
+										<input type="hidden" name="data[expires_in]" value="1760708385124">
+										<input type="hidden" name="data[domain]" value="meetride.bitrix24.ru">
+										<input type="hidden" name="data[member_id]" value="416b6724b147040004b356e86723bc58">
+										
+																				
+									</form>
+									
+									
+																	</td>
+								<td>Строка</td>
+								<td>
+									
+																			<a href="https://meetride.bitrix24.ru/crm/configs/fields/CRM_DEAL/edit/UF_CRM_1760704449/" target="_blank">Доп. условия / комментарии (служ.)</a>
+																		</td>
+								<td>
+																	</td>
+								<td>
+									100								</td>
+							</tr>
+												</tbody></table></body></html>
