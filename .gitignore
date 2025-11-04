@@ -36,3 +36,6 @@ local_config.php
 *.bak
 *~
 
+# Дубликаты и тестовые копии
+meetride-bot/
+
