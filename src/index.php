@@ -31,10 +31,13 @@ try {
         $log_message = date('Y-m-d H:i:s') . " - ONCRMDEALUPDATE event detected (handler: " . ($_REQUEST['event_handler_id'] ?? 'unknown') . ")\n";
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
         
-        // Проверка токена безопасности (опционально)
-        $expectedToken = 'ancn7qxhagfsifwxkcoo7s04tfc8q2ez';
+        // Проверка токена безопасности (поддержка нескольких токенов)
+        $validTokens = [
+            'ancn7qxhagfsifwxkcoo7s04tfc8q2ez',  // legacy OAuth-app token
+            'jlfevy2wfnosfq2ssvnsr7gz6dnhowv8',  // new outbound webhook (created 2026-04-25)
+        ];
         $receivedToken = $_REQUEST['auth']['application_token'] ?? '';
-        if (!empty($expectedToken) && $receivedToken !== $expectedToken) {
+        if (!in_array($receivedToken, $validTokens, true)) {
             $log_message = date('Y-m-d H:i:s') . " - Invalid token received: $receivedToken\n";
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
             http_response_code(403);
@@ -45,7 +48,7 @@ try {
         if ($_REQUEST['event_handler_id'] != '3') {
             $log_message = date('Y-m-d H:i:s') . " - Skipping handler " . $_REQUEST['event_handler_id'] . "\n";
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
-            exit;
+            // exit убран: handler_id меняется при переустановке вебхука
         }
         
         $dealId = (int) $_REQUEST['data']['FIELDS']['ID'];
@@ -53,7 +56,10 @@ try {
         
         // Получаем данные о сделке
         require_once('/home/telegramBot/crest/crest.php');
-        $deal = \CRest::call('crm.deal.get', ['id' => $dealId])['result'];
+        $deal = \CRest::call('crm.deal.get', [
+            'id' => $dealId,
+            'select' => ['*', botManager::GROUP_MESSAGE_SENT_FIELD]
+        ])['result'];
         
         $log_message = date('Y-m-d H:i:s') . " - Deal $dealId stage: " . ($deal['STAGE_ID'] ?? 'UNKNOWN') . "\n";
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
@@ -66,55 +72,51 @@ try {
         
         if ($deal && $deal['STAGE_ID'] == 'PREPARATION') {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal $dealId is PREPARATION\n", FILE_APPEND);
-            echo "Deal $dealId is in PREPARATION stage - sending to drivers\n";
-            $log_message = date('Y-m-d H:i:s') . " - Sending deal $dealId to drivers\n";
-            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
             
-            // Отправляем заявку в общий чат с кнопками
-            $success = botManager::newDealMessage($dealId, $telegram);
+            // Проверяем, изменилась ли стадия (переход на PREPARATION)
+            $oldStageId = $_REQUEST['data']['FIELDS']['OLD']['STAGE_ID'] ?? null;
+            $isStageChanged = !empty($oldStageId) && $oldStageId !== 'PREPARATION';
             
-            if ($success) {
-                echo "Deal $dealId sent to drivers chat successfully\n";
-                $log_message = date('Y-m-d H:i:s') . " - Deal $dealId sent successfully\n";
+            // Проверяем, было ли уже отправлено сообщение в общий чат
+            $groupMessageSent = $deal[botManager::GROUP_MESSAGE_SENT_FIELD] ?? '';
+            
+            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
+                date('Y-m-d H:i:s') . " - Stage changed: " . ($isStageChanged ? "YES (from $oldStageId)" : 'NO') . ", Already sent: " . ($groupMessageSent ?: 'NO') . "\n", FILE_APPEND);
+            
+            // Отправляем если:
+            // 1. Сообщение еще не отправлялось (новая заявка)
+            // 2. ИЛИ стадия изменилась на PREPARATION (возврат заявки, например водитель отказался)
+            if (empty($groupMessageSent) || $isStageChanged) {
+                echo "Deal $dealId is in PREPARATION stage - sending to drivers\n";
+                $log_message = date('Y-m-d H:i:s') . " - Sending deal $dealId to drivers (new or returned)\n";
+                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
+                
+                // Отправляем заявку в общий чат с кнопками
+                $success = botManager::newDealMessage($dealId, $telegram);
+                
+                if ($success) {
+                    echo "Deal $dealId sent to drivers chat successfully\n";
+                    $log_message = date('Y-m-d H:i:s') . " - Deal $dealId sent successfully\n";
+                } else {
+                    echo "Failed to send deal $dealId\n";
+                    $log_message = date('Y-m-d H:i:s') . " - Failed to send deal $dealId\n";
+                }
+                
+                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
             } else {
-                echo "Failed to send deal $dealId\n";
-                $log_message = date('Y-m-d H:i:s') . " - Failed to send deal $dealId\n";
+                file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
+                    date('Y-m-d H:i:s') . " - Deal $dealId already sent to group ($groupMessageSent), skipping\n", FILE_APPEND);
+                echo "Deal $dealId already sent to group\n";
             }
-            
-            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
             
         } elseif ($deal && $deal['STAGE_ID'] == 'PREPAYMENT_INVOICE') {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal $dealId is PREPAYMENT_INVOICE\n", FILE_APPEND);
             
-            // Проверяем, была ли изменена стадия (OLD STAGE_ID != NEW STAGE_ID)
-            $oldStageId = $_REQUEST['data']['FIELDS']['OLD']['STAGE_ID'] ?? null;
-            $isStageChanged = !empty($oldStageId) && $oldStageId !== 'PREPAYMENT_INVOICE';
+            // ВАЖНО: НЕ отправляем сообщение водителю здесь!
+            // Сообщение уже отправлено в driverAcceptHandle() при взятии заявки через кнопку
+            // Или будет отправлено через webhook_stage3.php при ручном назначении
             
-            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
-                date('Y-m-d H:i:s') . " - Stage changed: " . ($isStageChanged ? 'YES' : 'NO') . " (old: $oldStageId)\n", FILE_APPEND);
-            
-            // Отправляем сообщение только если стадия была изменена (ручной перевод на 3-ю стадию)
-            if ($isStageChanged && !empty($deal[botManager::DRIVER_ID_FIELD]) && $deal[botManager::DRIVER_ID_FIELD] > 0) {
-                $driver = \CRest::call('crm.contact.get', [
-                    'id' => $deal[botManager::DRIVER_ID_FIELD],
-                    'select' => ['ID', botManager::DRIVER_TELEGRAM_ID_FIELD]
-                ])['result'];
-                
-                if (!empty($driver['ID']) && !empty($driver[botManager::DRIVER_TELEGRAM_ID_FIELD])) {
-                    $driverTelegramId = (int) $driver[botManager::DRIVER_TELEGRAM_ID_FIELD];
-                    
-                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
-                        date('Y-m-d H:i:s') . " - Sending private message to driver $driverTelegramId for deal $dealId\n", FILE_APPEND);
-                    
-                    // Отправляем сообщение в личку водителю с кнопками "Начать выполнение"
-                    botManager::sendPrivateMessageToDriver($dealId, $driverTelegramId, $telegram);
-                } else {
-                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
-                        date('Y-m-d H:i:s') . " - Driver has no Telegram ID for deal $dealId\n", FILE_APPEND);
-                }
-            }
-            
-            // Также проверяем изменения в полях (как было раньше)
+            // Только проверяем изменения в полях
             echo "Deal $dealId stage is: " . $deal['STAGE_ID'] . " - checking for field changes\n";
             $log_message = date('Y-m-d H:i:s') . " - Checking for field changes in deal $dealId (stage: " . $deal['STAGE_ID'] . ")\n";
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
@@ -130,35 +132,10 @@ try {
         } elseif ($deal && $deal['STAGE_ID'] == 'EXECUTING') {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Deal $dealId is EXECUTING\n", FILE_APPEND);
             
-            // Проверяем, была ли изменена стадия (OLD STAGE_ID != NEW STAGE_ID)
-            $oldStageId = $_REQUEST['data']['FIELDS']['OLD']['STAGE_ID'] ?? null;
-            $isStageChanged = !empty($oldStageId) && $oldStageId !== 'EXECUTING';
+            // ВАЖНО: НЕ отправляем сообщение водителю здесь!
+            // Сообщение отправляется в travelStartYesHandle() при подтверждении начала поездки
             
-            file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
-                date('Y-m-d H:i:s') . " - Stage changed: " . ($isStageChanged ? 'YES' : 'NO') . " (old: $oldStageId)\n", FILE_APPEND);
-            
-            // Отправляем сообщение только если стадия была изменена (ручной перевод на 3-ю стадию или EXECUTING)
-            if ($isStageChanged && !empty($deal[botManager::DRIVER_ID_FIELD]) && $deal[botManager::DRIVER_ID_FIELD] > 0) {
-                $driver = \CRest::call('crm.contact.get', [
-                    'id' => $deal[botManager::DRIVER_ID_FIELD],
-                    'select' => ['ID', botManager::DRIVER_TELEGRAM_ID_FIELD]
-                ])['result'];
-                
-                if (!empty($driver['ID']) && !empty($driver[botManager::DRIVER_TELEGRAM_ID_FIELD])) {
-                    $driverTelegramId = (int) $driver[botManager::DRIVER_TELEGRAM_ID_FIELD];
-                    
-                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
-                        date('Y-m-d H:i:s') . " - Sending private message to driver $driverTelegramId for deal $dealId (EXECUTING)\n", FILE_APPEND);
-                    
-                    // Отправляем сообщение в личку водителю с кнопками "Начать выполнение"
-                    botManager::sendPrivateMessageToDriver($dealId, $driverTelegramId, $telegram);
-                } else {
-                    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', 
-                        date('Y-m-d H:i:s') . " - Driver has no Telegram ID for deal $dealId (EXECUTING)\n", FILE_APPEND);
-                }
-            }
-            
-            // Проверяем изменения в полях для стадии "Заявка выполняется"
+            // Только проверяем изменения в полях для стадии "Заявка выполняется"
             echo "Deal $dealId stage is: " . $deal['STAGE_ID'] . " - checking for field changes\n";
             $log_message = date('Y-m-d H:i:s') . " - Checking for field changes in deal $dealId (stage: " . $deal['STAGE_ID'] . ")\n";
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
