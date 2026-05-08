@@ -89,9 +89,9 @@ class botManager {
     public const DRIVERS_GROUP_CHAT_ID = '-1002544521661'; // БОЕВОЙ режим - группа водителей
     
     // Поля для системы напоминаний (исправленные ID)
-    public const REMINDER_SENT_FIELD            = 'UF_CRM_1758709126';
+    public const REMINDER_SENT_FIELD            = 'UF_CRM_REMINDER_SENT_TS'; // B4 fix: was UF_CRM_1758709126 (collision with ADDITIONAL_CONDITIONS_SERVICE)
     public const REMINDER_CONFIRMED_FIELD       = 'UF_CRM_1758709139';
-    public const REMINDER_NOTIFICATION_SENT_FIELD = 'UF_CRM_1758710216';
+    public const REMINDER_NOTIFICATION_SENT_FIELD = 'UF_CRM_REMINDER_NOTIF_SENT_TS'; // B4 fix: was UF_CRM_1758710216 (collision with FLIGHT_NUMBER_SERVICE)
     public const GROUP_MESSAGE_SENT_FIELD       = 'UF_CRM_1759918565'; // Сообщение в общий чат отправлено
 
     public static function newDealMessage(int $dealid, $telegram): bool {
