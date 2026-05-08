@@ -14,13 +14,27 @@ require_once('botManager.php');
 // Токен бота для уведомлений и управления (НЕ для создания сделок!)
 $bot_token = '7529690360:AAHED5aKmuKjjfFQPRI-0RQ8DlxlZARA2O4';
 
+$start_ts = microtime(true);
+$lat_action = 'unknown';
+$lat_deal = 0;
+
+// Гарантированный лог latency: пишется даже если внутри был exit / fatal.
+register_shutdown_function(function () use (&$start_ts, &$lat_action, &$lat_deal) {
+    $dur_ms = (int) round((microtime(true) - $start_ts) * 1000);
+    file_put_contents(
+        '/var/www/html/meetRiedeBot/logs/webhook_debug.log',
+        sprintf("%s - LAT callback=%s deal=%d total=%dms\n", date('Y-m-d H:i:s'), $lat_action, $lat_deal, $dur_ms),
+        FILE_APPEND
+    );
+});
+
 // Получаем входящие данные
 $input = file_get_contents('php://input');
 $update = json_decode($input, true);
 
 // Логирование для отладки
 $log_message = date('Y-m-d H:i:s') . " - Webhook получил: " . $input . "\n";
-file_put_contents('/root/meetride/logs/webhook.log', $log_message, FILE_APPEND);
+file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
 
 if (!$update) {
     http_response_code(400);
@@ -30,24 +44,40 @@ if (!$update) {
 try {
     $telegram = new Api($bot_token);
     $result = new Update($update);
-    
+
     // Проверяем, есть ли callback query
     if ($result->callbackQuery) {
-        $log_message = date('Y-m-d H:i:s') . " - Обработка callback: " . $result->callbackQuery->data . "\n";
-        file_put_contents('/root/meetride/logs/webhook.log', $log_message, FILE_APPEND);
-        
+        $cbData = $result->callbackQuery->data ?? '';
+        $log_message = date('Y-m-d H:i:s') . " - Обработка callback: " . $cbData . "\n";
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
+
+        if ($cbData) {
+            $parts = explode('_', $cbData);
+            $lat_action = $parts[0] ?? 'unknown';
+            $lat_deal = (int) ($parts[1] ?? 0);
+        }
+
+        // Добавляем CRest для обработки
+        if (!class_exists("CRest")) { require_once('/home/telegramBot/crest/crest.php'); }
+
         // Используем существующий обработчик из botManager
-        botManager::buttonHanlde($telegram, $result);
+        \Store\botManager::buttonHanlde($telegram, $result);
+
+        $log_message = date('Y-m-d H:i:s') . " - Callback обработан успешно\n";
+        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
     }
-    
+
     http_response_code(200);
     echo 'OK';
-    
-} catch (Exception $e) {
+
+} catch (\Throwable $e) {
     $log_message = date('Y-m-d H:i:s') . " - Ошибка webhook: " . $e->getMessage() . "\n";
-    file_put_contents('/root/meetride/logs/webhook.log', $log_message, FILE_APPEND);
-    
-    http_response_code(500);
-    echo 'Error: ' . $e->getMessage();
+    $log_message .= "   Файл: " . $e->getFile() . ":" . $e->getLine() . "\n";
+    $log_message .= "   Trace: " . $e->getTraceAsString() . "\n";
+    file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
+
+    // Возвращаем 200, чтобы Telegram не ретраил один и тот же сбойный callback
+    // в бесконечном цикле. Сама ошибка зафиксирована в webhook_debug.log.
+    http_response_code(200);
+    echo 'OK';
 }
-?>

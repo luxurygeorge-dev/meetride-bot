@@ -1,31 +1,37 @@
 # -*- coding: utf-8 -*-
 import dateparser
+import os
 import sys
 import io
+from pathlib import Path
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 import telebot
 import requests
 import re
+from dotenv import load_dotenv
 
-TELEGRAM_TOKEN = '7992462078:AAGJ46crBdOMSAuIfWncFd0AEjrDiT4Tnww'
-BITRIX_WEBHOOK = 'https://meetride.bitrix24.ru/rest/9/oo1pdplpuoy0q9ur/crm.deal.add.json'
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
+TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN_MAIN"]
+BITRIX_WEBHOOK = os.environ["BITRIX_WEBHOOK"]
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
 # Маппинг классов автомобилей с правильными ID из Bitrix24
 # Согласно полю UF_CRM_1751271728682 из deal (1).csv
 CAR_CLASS_MAPPING = {
-    'стандарт': 119,        # Стандарт
+    'стандарт': 119,
+    'комфорт плюс': 95,
     'комфорт': 93,          # Комфорт! Jolion, X-Cite, оптима и выше
     'комфорт!': 93,
     'комфорт +': 95,        # Комфорт +! Класс D, Camry, optima, k5 и подобные от 2018гв
     'комфорт+': 95,
     'микроавтобус': 97,     # Микроавтобус! Mercedes sprinter, pegout boxer и подобные
-    'минивэн': 99,          # Минивэн! Hyundai Starex и подобные до 8ми мест (с Ь)
-    'минивен': 99,          # Минивэн! (без Ь)
-    'минивэн vip': 101,     # Минивэн VIP! Mercedes V-class, hyundai staria и подобные (с Ь)
-    'минивен vip': 101,     # Минивэн VIP! (без Ь)
+    'минивэн': 99,          # Минивэн! Hyundai Starex и подобные до 8ми мест
+    'минивен': 99,
+    'минивэн vip': 101,     # Минивэн VIP! Mercedes V-class, hyundai staria и подобные
+    'минивен vip': 101,
     'автобус': 103,         # Автобус! Ютонг и подобные до 55 мест
     'бизнес': 105,          # Бизнес! BMW 5, MERCEDES E-CLASS И ПОДОБНЫЕ ОТ 2018 ГВ
     'представительский': 107, # Представительский! Mercedes s-class, Mercedes Maybach, BMW 7 и подобные
@@ -46,14 +52,12 @@ CAR_CLASS_MAPPING = {
 def parse_message(message):
     data = {}
 
-    # Номер заявки (поддерживает и текстовые номера)
-    # Сначала ищем с эмодзи, потом без эмодзи
-    match = re.search(r'#️⃣\s*(.+?)(?=\n|$)', message)
+    # Номер заявки — только с начала строки, чтобы не захватывать случайные # внутри текста
+    match = re.search(r'(?:^|\n)\s*(?:#️⃣|＃|#)\s*([A-ZА-Яa-zа-я0-9][A-ZА-Яa-zа-я0-9\-]+)', message)
     if not match:
-        # Если с эмодзи не найдено, ищем паттерн PT-xxx или РТ-xxx или BTW999999 (с дефисом или без)
-        # Формат: 2-4 буквы, опционально дефис, минимум 4 цифры
-        match = re.search(r'(?:^|\n)\s*([A-ZА-Я]{2,4}-?\d{4,})', message)
-    
+        # Fallback для агрегаторных форматов без #: ищем XX-NNNN+ в начале строки
+        match = re.search(r'(?:^|\n)\s*([A-ZА-Я]{2}-\d{4,})', message)
+
     if match:
         order_number = match.group(1).strip()
         data['TITLE'] = 'Заявка: {}'.format(order_number)
@@ -83,7 +87,8 @@ def parse_message(message):
         # Исправляем опечатки вида "05:301" -> "05:30"
         raw_date = re.sub(r'(\d{2}:\d{2})\d+', r'\1', raw_date)
         
-    parsed_date = dateparser.parse(raw_date)
+    # DATE_ORDER='DMY' — явно указываем русский порядок день.месяц.год
+    parsed_date = dateparser.parse(raw_date, settings={'DATE_ORDER': 'DMY'})
     data['WHEN'] = parsed_date.strftime('%Y-%m-%d %H:%M:%S') if parsed_date else ''
 
 
@@ -94,10 +99,6 @@ def parse_message(message):
     # Куда
     match = re.search(r'🅱️\s*(.+)', message)
     data['TO'] = match.group(1).strip() if match else ''
-
-    # Промежуточные точки
-    match = re.search(r'📍\s*(.+)', message)
-    data['INTERMEDIATE'] = match.group(1).strip() if match else ''
 
     # Номер рейса
     match = re.search(r'(✈️|🚆/✈️)\s*(.+)', message)
@@ -128,6 +129,7 @@ def parse_message(message):
 
 @bot.message_handler(func=lambda m: True)
 def handle_message(message):
+    print("RAW_MSG:", repr(message.text[:400]))
     parsed = parse_message(message.text)
 
     fields = {
@@ -137,7 +139,6 @@ def handle_message(message):
             'UF_CRM_1751269175432': parsed['TO'],
             'UF_CRM_1751269222959': parsed['WHEN'],
             'UF_CRM_1751271728682': parsed['CAR_CLASS'],
-            'UF_CRM_1751822573510': parsed['INTERMEDIATE'],
             'UF_CRM_1751271774391': parsed['FLIGHT'],
             'UF_CRM_1751271798896': parsed['PASSENGER'],
             'UF_CRM_1751269256380': parsed['CONDITIONS'],
