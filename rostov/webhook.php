@@ -101,9 +101,10 @@ try {
     $categoryId = $deal['CATEGORY_ID'] ?? 0;
     if ($categoryId != 1) {
         rostovLog("Deal $dealId is not Rostov (CATEGORY $categoryId), skipping");
-        // Временный telegram для ответа
+        // P0 B10 fix: $telegram is not yet defined here (it's set on line 117).
+        // Use $tempTelegram for the answer; \Exception fix from B1 above.
         $tempTelegram = new Api('8078436969:AAFfYA_t1f9bs8sM4ZttNYLho9woH6BUe9I');
-        safeAnswerCallback($telegram, $result, 'Это не заявка Ростова', true);
+        safeAnswerCallback($tempTelegram, $result, 'Это не заявка Ростова', true);
         exit('Not a Rostov deal');
     }
 
@@ -210,7 +211,7 @@ try {
     http_response_code(200);
     echo 'OK';
 
-} catch (Exception $e) {
+} catch (\Exception $e) {
     rostovLog("Ошибка webhook: " . $e->getMessage() . " Файл: " . $e->getFile() . ":" . $e->getLine());
     http_response_code(500);
     echo 'Error: ' . $e->getMessage();
@@ -243,7 +244,7 @@ function rostovAcceptHandle(int $dealId, array $deal, $chatId, string $groupChat
     // Подтверждаем callback
     try {
         safeAnswerCallback($telegram, $result, 'Заявка принята! Отправляем детали...');
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovAcceptHandle: Error answering callback: " . $e->getMessage());
     }
 
@@ -304,7 +305,7 @@ function rostovAcceptHandle(int $dealId, array $deal, $chatId, string $groupChat
             'text' => $groupMessage,
             'parse_mode' => 'HTML'
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovAcceptHandle: Error sending group message: " . $e->getMessage());
     }
     rostovLog("rostovAcceptHandle: Group notification sent");
@@ -316,7 +317,7 @@ function rostovAcceptHandle(int $dealId, array $deal, $chatId, string $groupChat
             'message_id' => $message->getMessageId(),
             'reply_markup' => json_encode(['inline_keyboard' => []])
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovAcceptHandle: Error removing buttons: " . $e->getMessage());
     }
 
@@ -336,7 +337,7 @@ function rostovAcceptHandle(int $dealId, array $deal, $chatId, string $groupChat
                 'reply_markup' => json_encode($privateKeyboard),
                 'parse_mode' => 'HTML'
             ]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             rostovLog("rostovAcceptHandle: Error sending private message: " . $e->getMessage());
         }
     } else {
@@ -373,7 +374,7 @@ function rostovRejectHandle(int $dealId, array $deal, $chatId, string $groupChat
             'text' => "<b>$driverName</b> отказался от заявки #$orderNumber",
             'parse_mode' => 'HTML'
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovRejectHandle: Error sending group message: " . $e->getMessage());
     }
 
@@ -401,7 +402,7 @@ function rostovRejectHandle(int $dealId, array $deal, $chatId, string $groupChat
             'message_id' => $message->getMessageId(),
             'reply_markup' => json_encode(['inline_keyboard' => []])
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovRejectHandle: Error removing buttons: " . $e->getMessage());
     }
 
@@ -433,7 +434,7 @@ function rostovStartHandle(int $dealId, array $deal, $chatId, $message, int $tel
             'message_id' => $message->getMessageId(),
             'reply_markup' => json_encode($keyboard)
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovStartHandle: Error editing markup: " . $e->getMessage());
     }
 
@@ -463,7 +464,7 @@ function rostovStartYesHandle(int $dealId, array $deal, $chatId, $message, int $
             'message_id' => $message->getMessageId(),
             'reply_markup' => json_encode($keyboard)
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovStartYesHandle: Error editing markup: " . $e->getMessage());
     }
 
@@ -488,7 +489,7 @@ function rostovStartNoHandle(int $dealId, array $deal, $chatId, $message, int $t
             'message_id' => $message->getMessageId(),
             'reply_markup' => json_encode($keyboard)
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovStartNoHandle: Error editing markup: " . $e->getMessage());
     }
 
@@ -513,7 +514,7 @@ function rostovCancelHandle(int $dealId, array $deal, $chatId, $message, int $te
             'message_id' => $message->getMessageId(),
             'reply_markup' => json_encode($keyboard)
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovCancelHandle: Error editing markup: " . $e->getMessage());
     }
 
@@ -543,7 +544,7 @@ function rostovCancelYesHandle(int $dealId, array $deal, $chatId, $message, int 
             'message_id' => $message->getMessageId(),
             'reply_markup' => json_encode($keyboard)
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovCancelYesHandle: Error editing markup: " . $e->getMessage());
     }
 
@@ -578,7 +579,7 @@ function rostovCancelNoHandle(int $dealId, array $deal, $chatId, $message, int $
             'message_id' => $message->getMessageId(),
             'reply_markup' => json_encode($keyboard)
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovCancelNoHandle: Error editing markup: " . $e->getMessage());
     }
 
@@ -603,7 +604,7 @@ function rostovFinishHandle(int $dealId, array $deal, $chatId, $message, int $te
             'message_id' => $message->getMessageId(),
             'reply_markup' => json_encode($keyboard)
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovFinishHandle: Error editing markup: " . $e->getMessage());
     }
 
@@ -631,7 +632,7 @@ function rostovFinishYesHandle(int $dealId, array $deal, $chatId, $message, int 
             'parse_mode' => 'HTML',
             'reply_markup' => json_encode(['inline_keyboard' => []])
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovFinishYesHandle: Error editing message: " . $e->getMessage());
         try {
             $telegram->editMessageReplyMarkup([
@@ -639,7 +640,7 @@ function rostovFinishYesHandle(int $dealId, array $deal, $chatId, $message, int 
                 'message_id' => $message->getMessageId(),
                 'reply_markup' => json_encode(['inline_keyboard' => []])
             ]);
-        } catch (Exception $e2) {
+        } catch (\Exception $e2) {
             rostovLog("rostovFinishYesHandle: Error removing buttons: " . $e2->getMessage());
         }
     }
@@ -665,7 +666,7 @@ function rostovFinishNoHandle(int $dealId, array $deal, $chatId, $message, int $
             'message_id' => $message->getMessageId(),
             'reply_markup' => json_encode($keyboard)
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovFinishNoHandle: Error editing markup: " . $e->getMessage());
     }
 
@@ -694,7 +695,7 @@ function rostovConfirmReminderHandle(int $dealId, array $deal, $chatId, $message
             'parse_mode' => 'HTML',
             'reply_markup' => json_encode(['inline_keyboard' => []])
         ]);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         rostovLog("rostovConfirmReminderHandle: Error editing message: " . $e->getMessage());
     }
 

@@ -154,43 +154,17 @@ try {
         exit;
     }
     
-    // Старая логика для прямых вызовов с dealId и stage
-    if (!empty($_REQUEST['dealId']) && !empty($_REQUEST['stage'])) {
-        
-        $dealId = (int) $_REQUEST['dealId'];
-        $stage = $_REQUEST['stage'];
-        echo "Processing deal: $dealId, stage: $stage\n";
-        
-        $log_message = date('Y-m-d H:i:s') . " - Webhook call: dealId=$dealId, stage=$stage\n";
-        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
-        
-        // Инициализируем Telegram
-        $telegram = new Api('7529690360:AAHED5aKmuKjjfFQPRI-0RQ8DlxlZARA2O4');
-        
-        // Отправляем заявку в общий чат с кнопками
-        $success = botManager::newDealMessage($dealId, $telegram);
-        
-        if ($success) {
-            echo "Deal $dealId sent to drivers chat successfully\n";
-            $log_message = date('Y-m-d H:i:s') . " - Deal $dealId sent successfully\n";
-        } else {
-            echo "Failed to send deal $dealId\n";
-            $log_message = date('Y-m-d H:i:s') . " - Failed to send deal $dealId\n";
-        }
-        
-        file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
-        
-        http_response_code(200);
-        exit('OK - Manual trigger processed');
-    }
-    
-    // Если сюда попал - неизвестный запрос
+    // P0 B8: legacy backdoor {dealId, stage} удалён (any unauthenticated user could trigger newDealMessage)
+    // Если сюда попали — неизвестный запрос
     http_response_code(400);
     echo "Bad Request - Use webhook.php for Telegram callbacks";
     
-} catch (Exception $e) {
+} catch (\Throwable $e) {
+    // P0 B9: Throwable вместо Exception (ловит и Error/TypeError)
     echo "ERROR: " . $e->getMessage() . "\n";
-    $log_message = date('Y-m-d H:i:s') . " - ERROR: " . $e->getMessage() . "\n";
+    $log_message = date('Y-m-d H:i:s') . " - ERROR: " . $e->getMessage() . " in " . $e->getFile() . ":" . $e->getLine() . "\n";
     file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
+    // Возвращаем 200 чтобы Bitrix не делал retry-loop (ошибка уже залогирована)
+    http_response_code(200);
 }
 ?>

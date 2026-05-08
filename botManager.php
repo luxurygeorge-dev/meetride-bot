@@ -156,7 +156,7 @@ class botManager {
             }
             
             return $success;
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - newDealMessage error: " . $e->getMessage() . "\n", FILE_APPEND);
             return false;
         }
@@ -689,7 +689,7 @@ class botManager {
                 'show_alert' => false
             ]);
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Callback answered successfully\n", FILE_APPEND);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error answering callback: " . $e->getMessage() . " (continuing anyway)\n", FILE_APPEND);
         }
         
@@ -741,7 +741,7 @@ class botManager {
                 'reply_markup' => json_encode(['inline_keyboard' => []])
             ]);
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Buttons removed successfully\n", FILE_APPEND);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error removing buttons: " . $e->getMessage() . " (continuing anyway)\n", FILE_APPEND);
         } catch (Error $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Fatal error removing buttons: " . $e->getMessage() . " (continuing anyway)\n", FILE_APPEND);
@@ -785,7 +785,7 @@ class botManager {
                 'parse_mode' => 'HTML'
             ]);
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Private message sent successfully\n", FILE_APPEND);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error sending private message: " . $e->getMessage() . "\n", FILE_APPEND);
         }
         
@@ -865,13 +865,9 @@ class botManager {
             self::safeAnswerCallback($telegram, $result);
             exit;
         }
-        $message = $result->get('message');
-        $chatId = $message['chat']['id'];
-        $dealUpdate = \CRest::call('crm.deal.update', [
-                        'id'     => $dealId,
-                        'fields' => ['STAGE_ID' => botManager::TRAVEL_STARTED_STAGE_ID],
-                ]
-        );
+        $message = $result->getMessage();
+        $chatId = $message->getChat()->getId();
+        // B13 fix: destructive stage reset removed (was setting EXECUTING on "No" — Rostov was correct skipping)
         $keyboard = new Keyboard();
 
         // 2. Включаем inline-режим (если нужны кнопки ВНУТРИ сообщения)
@@ -904,7 +900,7 @@ class botManager {
                     'text' => 'Выполнение отменено!',
                     'show_alert' => false
             ]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error answering callback: " . $e->getMessage() . "\n", FILE_APPEND);
         }
         
@@ -955,13 +951,9 @@ class botManager {
             self::safeAnswerCallback($telegram, $result);
             exit;
         }
-        $message = $result->get('message');
-        $chatId = $message['chat']['id'];
-        $dealUpdate = \CRest::call('crm.deal.update', [
-                        'id'     => $dealId,
-                        'fields' => ['STAGE_ID' => botManager::TRAVEL_STARTED_STAGE_ID],
-                ]
-        );
+        $message = $result->getMessage();
+        $chatId = $message->getChat()->getId();
+        // B13 fix: destructive stage reset removed (was setting EXECUTING on "No" — Rostov was correct skipping)
         $keyboard = new Keyboard();
 
         // 2. Включаем inline-режим (если нужны кнопки ВНУТРИ сообщения)
@@ -1041,8 +1033,8 @@ class botManager {
             self::safeAnswerCallback($telegram, $result);
             exit;
         }
-        $message = $result->get('message');
-        $chatId = $message['chat']['id'];
+        $message = $result->getMessage();
+        $chatId = $message->getChat()->getId();
 
 
         $keyboard = [
@@ -1149,7 +1141,7 @@ class botManager {
                     'show_alert' => false
             ]);
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Callback answered\n", FILE_APPEND);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error answering callback: " . $e->getMessage() . "\n", FILE_APPEND);
         }
         
@@ -1198,7 +1190,7 @@ class botManager {
                     'text'    => "❌ Водитель <b>$driverName</b> отказался от заявки #$orderNumber",
                     'parse_mode' => 'HTML'
             ]);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Error sending reject message: " . $e->getMessage() . "\n", FILE_APPEND);
         }
         
@@ -1378,14 +1370,14 @@ class botManager {
                 try {
                     $oldDate = new \DateTime($serviceDateTime);
                     $oldFormatted = $oldDate->format('d.m.Y H:i');
-                } catch (Exception $e) {}
+                } catch (\Exception $e) {}
             }
 
             if ($currentDateTime) {
                 try {
                     $newDate = new \DateTime($currentDateTime);
                     $newFormatted = $newDate->format('d.m.Y H:i');
-                } catch (Exception $e) {}
+                } catch (\Exception $e) {}
             }
 
             $changes[] = [
@@ -1513,7 +1505,7 @@ class botManager {
                     date('Y-m-d H:i:s') . " - SERVICE fields updated: " . print_r($updateServiceFields, true) . "\n", FILE_APPEND);
             }
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
                 date('Y-m-d H:i:s') . " - Error sending notification for deal $dealId: " . $e->getMessage() . "\n", FILE_APPEND);
         }
@@ -1682,7 +1674,7 @@ class botManager {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
                 date('Y-m-d H:i:s') . " - SERVICE fields initialized for deal $dealId\n", FILE_APPEND);
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log',
                 date('Y-m-d H:i:s') . " - Error sending private message to driver $driverTelegramId for deal $dealId: " . $e->getMessage() . "\n", FILE_APPEND);
         }
@@ -2028,7 +2020,8 @@ HTML;
         $log .= "\n------------------------\n";
         $log .= date("Y.m.d G:i:s") . "\n";
         $log .= "DEBUG\n";
-        $log .= $log;
+        // B15 fix: was "$log .= $log;" (doubled content). Replaced with proper file write below.
+        file_put_contents('/var/www/html/meetRiedeBot/logs/unknown_button_actions.log', $log, FILE_APPEND);
         $log .= "\n------------------------\n";
 
         if ($wa == 'w') {
@@ -2149,7 +2142,7 @@ HTML;
         }
         
         // Проверяем, что уведомление еще не отправлялось (поле может содержать текст из SERVICE полей)
-        if (!empty($deal[botManager::REMINDER_NOTIFICATION_SENT_FIELD]) && preg_match('/^\d{4}-\d{2}-\d{2}}/', (string)($deal[botManager::REMINDER_NOTIFICATION_SENT_FIELD] ?? ''))) {
+        if (!empty($deal[botManager::REMINDER_NOTIFICATION_SENT_FIELD]) && preg_match('/^\d{4}-\d{2}-\d{2}/', (string)($deal[botManager::REMINDER_NOTIFICATION_SENT_FIELD] ?? ''))) {
             return false;
         }
         
@@ -2229,7 +2222,7 @@ HTML;
                         $result['errors'][] = "Ошибка отправки напоминания для заявки #{$deal['ID']}";
                     }
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $result['errors'][] = "Ошибка обработки заявки #{$deal['ID']}: " . $e->getMessage();
             }
         }
@@ -2271,7 +2264,7 @@ HTML;
                         $result['errors'][] = "Ошибка отправки уведомления ответственному для заявки #{$deal['ID']}";
                     }
                 }
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $result['errors'][] = "Ошибка обработки уведомления для заявки #{$deal['ID']}: " . $e->getMessage();
             }
         }
