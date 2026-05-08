@@ -103,7 +103,8 @@ try {
         rostovLog("Deal $dealId is not Rostov (CATEGORY $categoryId), skipping");
         // P0 B10 fix: $telegram is not yet defined here (it's set on line 117).
         // Use $tempTelegram for the answer; \Exception fix from B1 above.
-        $tempTelegram = new Api('8078436969:AAFfYA_t1f9bs8sM4ZttNYLho9woH6BUe9I');
+        // Phase 2D: token from config/cities/rostov.php
+        $tempTelegram = new Api(CityConfigLoader::getByCategoryId(1)['telegram']['notification_bot_token']);
         safeAnswerCallback($tempTelegram, $result, 'Это не заявка Ростова', true);
         exit('Not a Rostov deal');
     }

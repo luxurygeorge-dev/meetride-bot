@@ -127,7 +127,9 @@ try {
         date('Y-m-d H:i:s') . " - Sending private message to driver $driverTelegramId for deal $dealId\n", FILE_APPEND);
     
     // Инициализируем Telegram
-    $telegram = new Api('7529690360:AAHED5aKmuKjjfFQPRI-0RQ8DlxlZARA2O4');
+    // Phase 2D: token from config/cities/volgograd.php
+    require_once(__DIR__ . '/CityConfigLoader.php');
+    $telegram = new Api(\Store\CityConfigLoader::getByCategoryId(0)['telegram']['notification_bot_token']);
     
     // Отправляем сообщение в личку водителю с кнопками "Начать выполнение"
     botManager::sendPrivateMessageToDriver($dealId, $driverTelegramId, $telegram);

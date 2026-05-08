@@ -10,9 +10,10 @@ use Telegram\Bot\Objects\Update;
 
 require_once('vendor/autoload.php');
 require_once('botManager.php');
+require_once(__DIR__ . '/CityConfigLoader.php');
 
-// Токен бота для уведомлений и управления (НЕ для создания сделок!)
-$bot_token = '7529690360:AAHED5aKmuKjjfFQPRI-0RQ8DlxlZARA2O4';
+// Phase 2D: token loaded from config/cities/volgograd.php (no more hardcode)
+$bot_token = \Store\CityConfigLoader::getByCategoryId(0)['telegram']['notification_bot_token'];
 
 $start_ts = microtime(true);
 $lat_action = 'unknown';

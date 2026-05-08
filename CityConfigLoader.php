@@ -27,10 +27,15 @@ class CityConfigLoader {
      */
     public static function load($cityCode) {
         if (!isset(self::$configs[$cityCode])) {
-            $path = "/root/meetride_v2/config/cities/{$cityCode}.php";
-
+            // Phase 2C: prefer webroot copy, fallback to legacy /root/meetride_v2/
+            $path = __DIR__ . "/cities/{$cityCode}.php";
             if (!file_exists($path)) {
-                throw new \Exception("City config not found: {$path}");
+                $legacyPath = "/root/meetride_v2/config/cities/{$cityCode}.php";
+                if (file_exists($legacyPath)) {
+                    $path = $legacyPath;
+                } else {
+                    throw new \Exception("City config not found: tried {$path} and {$legacyPath}");
+                }
             }
 
             self::$configs[$cityCode] = require $path;

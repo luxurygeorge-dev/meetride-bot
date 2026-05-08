@@ -64,8 +64,10 @@ try {
         $log_message = date('Y-m-d H:i:s') . " - Deal $dealId stage: " . ($deal['STAGE_ID'] ?? 'UNKNOWN') . "\n";
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', $log_message, FILE_APPEND);
         
-        // Инициализируем Telegram для всех операций
-        $telegram = new Api('7529690360:AAHED5aKmuKjjfFQPRI-0RQ8DlxlZARA2O4');
+        // Phase 2D: token loaded from config/cities/volgograd.php (no more hardcode)
+        require_once(__DIR__ . '/../CityConfigLoader.php');
+        $vlg_token = \Store\CityConfigLoader::getByCategoryId(0)['telegram']['notification_bot_token'];
+        $telegram = new Api($vlg_token);
         $update = new Update($_REQUEST);
         
         file_put_contents('/var/www/html/meetRiedeBot/logs/webhook_debug.log', date('Y-m-d H:i:s') . " - Starting stage check for deal $dealId\n", FILE_APPEND);
